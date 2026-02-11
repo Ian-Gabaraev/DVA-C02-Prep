@@ -1,115 +1,101 @@
-# IAM
+# AWS DVA-C02 Study Notes
 
-It is a `global` service.
+---
 
-There are `groups` and `users`. A `group` cannot contain another `group`.
+## IAM (Identity & Access Management)
 
-But `users` can be in multiple `groups`.
+> **Global service** — not region-specific
 
-Both `users` and `groups` can be assigned `JSON` documents containing permissions and those are called `policies`.
+### Core Concepts
 
-A `user` does not need to be in a `group`. You can attach an `inline policy` to them instead.
+| Concept | Description |
+|---------|-------------|
+| **Users** | Individual identities, can belong to multiple groups |
+| **Groups** | Collections of users (cannot nest groups) |
+| **Policies** | JSON documents defining permissions |
+| **Inline Policy** | Policy attached directly to a user (no group needed) |
 
-Every policy follows the same structure:
+### Policy Structure
 
-`Version` - it is a date usually. Reflects the policy language version.
+```json
+{
+  "Version": "2012-10-17",    // Policy language version
+  "Statement": [{
+    "Sid": "StatementId",     // Optional identifier
+    "Effect": "Allow|Deny",
+    "Principal": "arn:...",   // Account/user/role this applies to
+    "Action": ["s3:Get*"],    // API actions
+    "Resource": ["arn:..."]   // Target resources
+  }]
+}
+```
 
-`Sid` - statement ID.
+### Roles
 
-`Effect` - it is either `Allow` or `Deny` .
+- Permissions for **services**, not users
+- Attach policies to roles → assign roles to services (e.g., EC2)
+- The service receiving the role = **trusted entity**
 
-`Principal` - refers to the `account` or `user` or `role` to which the `policy` is applied.
+### Security Tools
 
-`Action` - list of actions that are allowed or denied.
+| Tool | Purpose |
+|------|---------|
+| **Credentials Report** | CSV of all users + credential status |
+| **Access Advisor** | Shows service access history per user |
 
-`Resource` - list of resource to which `action` applies.
+---
 
-## Roles
+## EC2 (Elastic Compute Cloud)
 
-`Roles` are `permissions` meant to be used by `services`, not `users`.
-For example, you give an `EC2` instance a `role` so that it can perform some actions in `aws`.
+**EC2 encompasses:** Instances • EBS (drives) • ELB (load balancing) • ASG (auto-scaling)
 
-`Permissions` contain `policies`.
+### Configuration Options
 
-To create a `role`, you select a `service` to grant it to, and then you attach `policies` to it. The `service` that is granted a `role` is also called a `trusted entity`.
+- **OS:** Linux, Windows, MacOS
+- **Compute:** CPU cores, RAM
+- **Storage:** Network (EBS/EFS) or Hardware (Instance Store)
+- **Network:** Card speed, public/private IP
 
-## IAM Security Tools
+**User Data** — Bootstrap script that runs at launch with root privileges. Use for updates, software installation, config.
 
-`Credentials Report` - it lists all your users and the status of their credentials, download as a CSV.
+---
 
-`Access Advisor` aka `Last Accessed` (new name) - it shows the services that a user has accessed and when was the last time they accessed it.
+### Security Groups
 
-# EC2
+Acts as a **firewall** for EC2 instances.
 
-Elastic Compute Cloud `EC2`. It is not just one service, it contains multiple concepts:
+| Rule Type | Default | Description |
+|-----------|---------|-------------|
+| **Inbound** | Blocked | Controls incoming traffic |
+| **Outbound** | Allowed | Controls outgoing traffic |
 
-- Virtual Machines (`EC2`)
-- Virtual Drives (`EBS`)
-- Load Balancing (`ELB`)
-- Scaling (`ASG`)
+> ⚠️ **Timeout = Security Group issue** — If you can't connect (SSH/HTTP/HTTPS), check SG first
 
-What options do you have?
+**Key points:**
+- Locked to **region + VPC**
+- SGs can reference other SGs (e.g., allow traffic from instances with SG2)
 
-- Operating systems: `MacOS`, `Linux`, `Windows`
-- Compute: `RAM` and `CPU` cores
-- Storage:
-  - Network attached (`EBS` or `EFS`)
-  - Hardware (`EC2 Instance Store`)
-- Network card: speed of the card, IP address
+### Common Ports
 
-You can also `bootstrap` your EC2 instance by using `User Data`. That is usually a script that runs when an `EC2` instance starts. Useful to install updates, software, anything. It runs with `root` credentials.
+| Port | Protocol |
+|------|----------|
+| 22 | SSH / SFTP |
+| 21 | FTP |
+| 80 | HTTP |
+| 443 | HTTPS |
+| 3389 | RDP (Windows) |
 
-## Security groups (Firewall)
+---
 
-Each EC2 instance will have a `security group` which acts as a `firewall` and controls traffic to the instance.
+### Instance Types
 
-A `security group` will have
+**Naming:** `m5.2xlarge` → **m** (class) + **5** (generation) + **2xlarge** (size)
 
-- `inbound rules` - who on the internet can access the instance.
-- `outbound rules` - what the instance can access on the internet.
-
-*`A tip:` any time you try to connect to your EC2 instance, over HTTP, HTTPS or SSH, and you see a `timeout`, it is `100% a security group issue`.*
-
-A `security group` is `locked to a specific region or VPC`. So if you switch a region, you will need a new `security group`.
-
-By default, `all inbound traffic is blocked`, and `all outbound is allowed`.
-
-A nice feature:
-
-You have `EC2 A`. It has `SG1`. In its inbound rules it allows `SG2`.
-
-Then you have `EC2 B`. It has `SG2` attached.
-
-Now `EC2 B` can connect straight to `EC2 A`.
-
-### Important ports
-
-- `22` - SSH
-- `21` - FTP
-- `22` - SFTP
-- `80` - HTTP
-- `443` - HTTPS
-
-## Instance types
-
-A typical EC2 instance follows a naming convention. E.g.:
-
-`m5.2xlarge`
-
-- `m` - instance class
-- `5` - generation
-- `2xlarge` - size, defines the memory, the CPU
-
-What types are there
-
-- `General purpose`: `t3`, `m5` - `balance` between compute, memory and network
-
-- `Compute optimized`: `c5` - high CPU to memory ratio, for `compute intensive applications`, like `batch processing` workloads
-
-- `Memory optimized`: `r5` - high memory to CPU ratio, for tasks that `process a lot of data in RAM`, like databases
-
-- `Storage optimized`: `i3` - high storage throughput and IOPS, for `storage-intensive` tasks, like caches or file systems.
-
-- GPU instances: `p3` - for machine learning and AI
-
-- FPGA instances: `f1` - for custom hardware acceleration
+| Type | Prefix | Use Case |
+|------|--------|----------|
+| **General Purpose** | t3, m5 | Balanced workloads |
+| **Compute Optimized** | c5 | Batch processing, high-performance computing |
+| **Memory Optimized** | r5 | In-memory databases, caching |
+| **Storage Optimized** | i3 | High IOPS, data warehousing |
+| **GPU** | p3 | ML/AI, graphics |
+| **FPGA** | f1 | Custom hardware acceleration |
