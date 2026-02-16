@@ -167,3 +167,109 @@ Backup mechanism for EBS volumes — can restore to any AZ.
 | **Cross-AZ restore** | Snapshot in us-east-1a → restore in us-east-1b |
 | **Recycle Bin** | Deleted snapshots recoverable (configurable retention) |
 | **Fast Snapshot Restore** | No latency on first use, but expensive |
+
+
+### EC2 Instance Store
+
+Hardware-attached storage (physically on the host) — **not network-based**.
+
+| Pros | Cons |
+|------|------|
+| Extremely high IOPS (millions) | **Ephemeral** — data lost on stop/terminate/hardware failure |
+| Low latency (direct attached) | Cannot detach and reattach |
+| Included in instance cost | Size tied to instance type |
+
+**Use cases:** Buffer, cache, scratch data, temporary content
+
+> ⚠️ **You are responsible for backups/replication** — AWS won't recover this data
+
+### Delete on Termination
+
+| Volume | Default Behavior |
+|--------|------------------|
+| Root EBS | **Deleted** on termination |
+| Additional EBS | **Preserved** on termination |
+
+Can be changed via console or CLI at launch time.
+
+---
+
+### EBS Volume Types
+
+| Type | Category | IOPS | Throughput | Size | Boot? |
+|------|----------|------|------------|------|-------|
+| **gp3** | General SSD | 3,000–16,000 | 125–1,000 MiB/s | 1 GiB–16 TiB | ✅ |
+| **gp2** | General SSD | 3 IOPS/GiB (max 16,000) | Linked to IOPS | 1 GiB–16 TiB | ✅ |
+| **io2 Block Express** | Provisioned IOPS | Up to 256,000 | 4,000 MiB/s | 4 GiB–64 TiB | ✅ |
+| **io1** | Provisioned IOPS | Up to 64,000 | 1,000 MiB/s | 4 GiB–16 TiB | ✅ |
+| **st1** | Throughput HDD | Max 500 | 500 MiB/s | 125 GiB–16 TiB | ❌ |
+| **sc1** | Cold HDD | Max 250 | 250 MiB/s | 125 GiB–16 TiB | ❌ |
+
+> 💡 **Only SSD types (gp2/gp3/io1/io2) can be boot volumes**
+
+**gp3 vs gp2:** gp3 allows independent IOPS/throughput scaling; gp2 links IOPS to size
+
+**Provisioned IOPS (io1/io2):** For sustained IOPS needs — databases, critical apps. io2 Block Express offers sub-millisecond latency.
+
+### EBS Multi-Attach
+
+- **io1/io2 only** — attach same volume to multiple EC2 in same AZ
+- Up to **16 instances** simultaneously
+- Use case: clustered applications requiring shared storage
+
+---
+
+## EFS (Elastic File System)
+
+Managed NFS that can be mounted on **multiple EC2 across multiple AZs**.
+
+| Feature | Value |
+|---------|-------|
+| **Compatibility** | Linux only (POSIX) |
+| **Scaling** | Automatic, up to petabytes |
+| **Throughput** | Up to 10+ GB/s |
+| **Pricing** | Pay per GB used |
+
+### Performance Modes
+
+| Mode | Use Case |
+|------|----------|
+| **General Purpose** | Latency-sensitive (web servers, CMS) |
+| **Max I/O** | Higher latency, highly parallel (big data) |
+
+### Throughput Modes
+
+| Mode | Description |
+|------|-------------|
+| **Bursting** | Scales with storage size |
+| **Provisioned** | Fixed throughput regardless of size |
+| **Elastic** | Auto-scales based on workload (recommended) |
+
+### Storage Tiers
+
+| Tier | Cost | Access |
+|------|------|--------|
+| **Standard** | Higher | Frequent |
+| **Infrequent Access (IA)** | Lower storage, pay per retrieval | Occasional |
+| **Archive** | ~50% cheaper | Rare |
+
+> 💡 Use **lifecycle policies** to auto-move files between tiers
+
+### Availability
+
+| Option | Description |
+|--------|-------------|
+| **Standard (Multi-AZ)** | Production, HA |
+| **One Zone** | Dev/backup, cheaper, single AZ |
+
+---
+
+## EBS vs EFS vs Instance Store
+
+| Feature | EBS | EFS | Instance Store |
+|---------|-----|-----|----------------|
+| **Attach to** | 1 instance (io1/io2: multi) | 100s of instances | 1 instance |
+| **AZ scope** | Single AZ | Multi-AZ | Single AZ |
+| **Persistence** | Persists | Persists | Ephemeral |
+| **Use case** | Boot volumes, databases | Shared content, web serving | Cache, temp data |
+| **Cost** | Per provisioned GB | Per used GB | Included |
