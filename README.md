@@ -4,6 +4,7 @@
 
 | Section | Topics |
 |---------|--------|
+| [AWS Global Infrastructure](#aws-global-infrastructure) | Regions, AZs, Edge Locations |
 | [IAM](#iam-identity--access-management) | Users, Groups, Policies, Roles |
 | [EC2](#ec2-elastic-compute-cloud) | Instance Types, Purchasing, Security Groups |
 | [AMI](#ami-amazon-machine-image) | Custom AMIs, Cross-region |
@@ -11,6 +12,42 @@
 | [EFS](#efs-elastic-file-system) | Performance Modes, Storage Tiers |
 | [Storage Comparison](#ebs-vs-efs-vs-instance-store) | EBS vs EFS vs Instance Store |
 | [ELB & ASG](#elb--asg-load-balancing--auto-scaling) | ALB, NLB, GLB, Health Checks, Scaling |
+| [RDS & Aurora](#rds) | Read Replicas, Multi-AZ, Aurora, Proxy |
+
+---
+
+## AWS Global Infrastructure
+
+### Regions
+
+A **Region** is a geographic area with multiple data centers (e.g., `us-east-1`, `eu-west-2`).
+
+| Consideration | Description |
+|---------------|-------------|
+| **Compliance** | Data may need to stay in specific countries |
+| **Latency** | Deploy closer to users for better performance |
+| **Service availability** | Not all services available in all regions |
+| **Pricing** | Varies by region |
+
+### Availability Zones (AZs)
+
+Each Region has **2-6 AZs** (e.g., `us-east-1a`, `us-east-1b`). Each AZ = one or more discrete data centers with independent power, networking, and connectivity.
+
+| Key Point | Detail |
+|-----------|--------|
+| **Isolation** | AZs are physically separated (disaster protection) |
+| **Low latency** | Connected via high-bandwidth, low-latency networking |
+| **HA design** | Distribute resources across AZs for fault tolerance |
+
+### Edge Locations & Global Services
+
+| Concept | Description |
+|---------|-------------|
+| **Edge Locations** | CDN endpoints for CloudFront (200+ worldwide) |
+| **Global services** | IAM, Route 53, CloudFront, WAF (not region-specific) |
+| **Regional services** | EC2, RDS, EBS, etc. (bound to a region) |
+
+> 💡 **Exam tip:** Know which services are global vs regional. IAM is global; EC2 and EBS are regional; EBS is AZ-specific.
 
 ---
 
@@ -356,12 +393,14 @@ Layer 7 (HTTP) — routes to **target groups**:
 | Private IPs | On-prem servers |
 
 **Routing rules based on:**
+
 - URL path (`/api/*`, `/images/*`)
 - Hostname (`api.example.com`)
 - Query strings (`?platform=mobile`)
 - HTTP headers
 
 **Key points:**
+
 - Fixed DNS hostname (no static IP)
 - Client IP in `X-Forwarded-For` header
 - WebSocket support
@@ -381,6 +420,7 @@ Layer 4 (TCP/UDP) — **highest performance** LB.
 **Target groups:** EC2 instances, Private IPs, ALB (NLB → ALB combo)
 
 **NLB provides:**
+
 - Static hostname
 - Static IP (one per AZ)
 - Elastic IP support
@@ -457,6 +497,7 @@ Distributes traffic evenly across all targets in all AZs, regardless of AZ distr
 | **SNI (Server Name Indication)** | Allows multiple SSL certs on one LB — client indicates hostname, LB selects correct cert |
 
 **SNI Support:**
+
 - ✅ ALB, NLB (multiple certs)
 - ❌ CLB (one cert only)
 
@@ -544,3 +585,96 @@ Rolling update when you change Launch Template — replaces instances gradually.
 | **Warm-up** | Time before new instance counts as healthy |
 
 > 💡 Enables zero-downtime deployments for Launch Template changes
+
+## RDS (Relational Database Service)
+
+Managed relational database — AWS handles patching, backups, scaling, HA, monitoring.
+
+| Feature | Included |
+|---------|----------|
+| OS/DB patching | ✅ |
+| Automated backups | ✅ |
+| Multi-AZ failover | ✅ |
+| Read replicas | ✅ (up to 15) |
+| Encryption (at-rest & in-flight) | ✅ |
+| Performance Insights | ✅ |
+
+> ⚠️ **No SSH access** to the underlying instance
+
+### Storage Auto Scaling
+
+RDS automatically increases storage when running low. Set `MaxStorageThreshold` to cap it.
+
+---
+
+### Read Replicas vs Multi-AZ
+
+| Feature | Read Replicas | Multi-AZ |
+|---------|---------------|----------|
+| **Purpose** | Read scaling | Disaster recovery |
+| **Replication** | ASYNC (eventually consistent) | SYNC (immediate) |
+| **Readable?** | ✅ Yes | ❌ Standby only |
+| **Cross-region?** | ✅ Yes (with cost) | ❌ Same region |
+| **Failover** | Manual (promote to standalone) | Automatic |
+| **Max count** | 15 | 1 standby |
+
+**Cost:** Same-region RR replication = free. Cross-region = network charges.
+
+**Multi-AZ setup:** Enable in console → snapshot taken → restored to standby AZ → sync begins. **Zero downtime.**
+
+> 💡 Read replicas can also be Multi-AZ (common exam question)
+
+---
+
+### Amazon Aurora
+
+AWS-built relational DB, compatible with **MySQL** and **PostgreSQL**.
+
+| Feature | Value |
+|---------|-------|
+| Performance | 5x MySQL, 3x PostgreSQL |
+| Storage | Auto-scales 10 GB → 128 TiB |
+| Replicas | Up to 15 (faster replication than RDS) |
+| Failover | < 30 seconds |
+| Copies | 6 copies across 3 AZs |
+| Cost | ~20% more than RDS |
+
+**Self-healing:** Corrupted data blocks repaired via peer-to-peer replication.
+
+### Aurora Endpoints
+
+| Endpoint | Purpose |
+|----------|--------|
+| **Writer Endpoint** | Always points to current master (for writes) |
+| **Reader Endpoint** | Load-balanced across all read replicas |
+| **Custom Endpoint** | Route to specific subset of instances |
+
+> 💡 Use Writer for writes, Reader for reads — endpoints auto-update on failover
+
+---
+
+### RDS & Aurora Security
+
+| Layer | Implementation |
+|-------|----------------|
+| **At-rest encryption** | KMS key at launch (encrypts master + replicas + snapshots) |
+| **In-flight encryption** | TLS by default (use AWS TLS root certs) |
+| **Authentication** | Username/password OR IAM DB authentication |
+| **Network** | Security groups control access |
+
+> To encrypt an unencrypted DB: snapshot → copy with encryption → restore
+
+---
+
+### RDS Proxy
+
+Serverless connection pooler in front of RDS/Aurora.
+
+| Benefit | Description |
+|---------|-------------|
+| **Connection pooling** | Reduces DB load from many connections |
+| **Failover** | Reduces failover time by 66% |
+| **IAM auth** | Enforce IAM authentication |
+| **VPC only** | Never publicly accessible |
+
+> 💡 Great for Lambda → RDS (Lambda opens many short-lived connections)
