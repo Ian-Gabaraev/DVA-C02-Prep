@@ -385,10 +385,13 @@ Layer 3 (IP) — for **network appliances** (firewalls, IDS, packet inspection).
 
 Same client always routed to same target instance.
 
-| Cookie Type | Description |
-|-------------|-------------|
-| **Application-based** | App sets custom cookie (e.g., `AWSALBAPP`) |
-| **Duration-based** | LB generates cookie (`AWSALB`) with TTL |
+| Cookie Type | Who Creates | Cookie Name |
+|-------------|-------------|-------------|
+| **Duration-based** | ALB | `AWSALB` (reserved) |
+| **Application-based (LB)** | ALB | `AWSALBAPP` (reserved) |
+| **Application-based (App)** | Your app | Custom (e.g., `SESSIONID`) |
+
+> ⚠️ `AWSALB*` names are **AWS-reserved** — cannot be used by your app
 
 > 💡 Use for stateful apps; avoid if possible (prefer stateless + external session store)
 
