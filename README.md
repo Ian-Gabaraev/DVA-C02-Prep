@@ -1,5 +1,17 @@
 # AWS DVA-C02 Study Notes
 
+## Table of Contents
+
+| Section | Topics |
+|---------|--------|
+| [IAM](#iam-identity--access-management) | Users, Groups, Policies, Roles |
+| [EC2](#ec2-elastic-compute-cloud) | Instance Types, Purchasing, Security Groups |
+| [AMI](#ami-amazon-machine-image) | Custom AMIs, Cross-region |
+| [EBS](#ebs-elastic-block-store) | Volume Types, Snapshots, Multi-Attach |
+| [EFS](#efs-elastic-file-system) | Performance Modes, Storage Tiers |
+| [Storage Comparison](#ebs-vs-efs-vs-instance-store) | EBS vs EFS vs Instance Store |
+| [ELB & ASG](#elb--asg-load-balancing--auto-scaling) | ALB, NLB, GLB, Health Checks, Scaling |
+
 ---
 
 ## IAM (Identity & Access Management)
