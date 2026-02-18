@@ -72,6 +72,7 @@ Acts as a **firewall** for EC2 instances.
 > ⚠️ **Timeout = Security Group issue** — If you can't connect (SSH/HTTP/HTTPS), check SG first
 
 **Key points:**
+
 - Locked to **region + VPC**
 - SGs can reference other SGs (e.g., allow traffic from instances with SG2)
 
@@ -121,6 +122,7 @@ Acts as a **firewall** for EC2 instances.
 **Spot:** Cheapest option. Lose instance when spot price > your bid. Never use for critical workloads.
 
 **Dedicated Host vs Instance:**
+
 - **Host** — Full server control, see sockets/cores (for BYOL licensing)
 - **Instance** — Dedicated hardware, no host visibility, may share with same account
 
@@ -139,6 +141,7 @@ AMI = Pre-configured EC2 template (OS + software + config)
 | **Custom** | Your own, built from an EC2 instance |
 
 **Creating a Custom AMI:**
+
 1. Launch EC2 → configure/install software
 2. Stop instance (for data integrity)
 3. Create AMI → creates EBS snapshots automatically
@@ -153,6 +156,7 @@ AMI = Pre-configured EC2 template (OS + software + config)
 Network-attached storage for EC2 — like a USB stick over the network.
 
 **Key characteristics:**
+
 - Bound to **one AZ**
 - Attached to **one instance** at a time (except io1/io2 Multi-Attach)
 - Network drive = some latency
@@ -167,7 +171,6 @@ Backup mechanism for EBS volumes — can restore to any AZ.
 | **Cross-AZ restore** | Snapshot in us-east-1a → restore in us-east-1b |
 | **Recycle Bin** | Deleted snapshots recoverable (configurable retention) |
 | **Fast Snapshot Restore** | No latency on first use, but expensive |
-
 
 ### EC2 Instance Store
 
@@ -273,3 +276,232 @@ Managed NFS that can be mounted on **multiple EC2 across multiple AZs**.
 | **Persistence** | Persists | Persists | Ephemeral |
 | **Use case** | Boot volumes, databases | Shared content, web serving | Cache, temp data |
 | **Cost** | Per provisioned GB | Per used GB | Included |
+
+## ELB & ASG (Load Balancing & Auto Scaling)
+
+### OSI Model Quick Reference
+
+| Layer | Name | Protocol/Example | AWS LB |
+|-------|------|------------------|--------|
+| 7 | Application | HTTP, HTTPS, WebSocket | ALB |
+| 4 | Transport | TCP, UDP, TLS | NLB |
+| 3 | Network | IP, ICMP | GLB |
+| 2 | Data Link | Ethernet, MAC | — |
+| 1 | Physical | Cables, signals | — |
+
+---
+
+### Load Balancer Types
+
+| Type | Layer | Protocols | Use Case |
+|------|-------|-----------|----------|
+| **ALB** | 7 | HTTP, HTTPS, WebSocket | Web apps, microservices |
+| **NLB** | 4 | TCP, UDP, TLS | Extreme performance, static IP |
+| **GLB** | 3 | IP (GENEVE) | Firewalls, packet inspection |
+| **CLB** | 4/7 | HTTP, HTTPS, TCP, SSL | Legacy (avoid) |
+
+- Classic Load Balancer (old) - HTTP, HTTPS, TCP and SSL
+- Application Load Balancer - HTTP, HTTPS, WebSocket
+- Network Load Balancer - TCP, TLS, UDP
+- Gateway Load Balancer - IP Protocol
+
+### ELB Health Checks
+
+LB periodically pings targets to verify they're healthy.
+
+| Setting | Description |
+|---------|-------------|
+| **Protocol** | HTTP, HTTPS, TCP |
+| **Path** | e.g., `/health` (HTTP/HTTPS only) |
+| **Interval** | Time between checks (default: 30s) |
+| **Threshold** | Consecutive successes/failures to change state |
+| **Timeout** | Time to wait for response |
+
+> ⚠️ Unhealthy targets stop receiving traffic but remain registered
+
+---
+
+### Application Load Balancer (ALB)
+
+Layer 7 (HTTP) — routes to **target groups**:
+
+| Target Type | Example |
+|-------------|--------|
+| EC2 instances | i-0123... |
+| Lambda functions | my-function |
+| Private IPs | On-prem servers |
+
+**Routing rules based on:**
+- URL path (`/api/*`, `/images/*`)
+- Hostname (`api.example.com`)
+- Query strings (`?platform=mobile`)
+- HTTP headers
+
+**Key points:**
+- Fixed DNS hostname (no static IP)
+- Client IP in `X-Forwarded-For` header
+- WebSocket support
+
+---
+
+### Network Load Balancer (NLB)
+
+Layer 4 (TCP/UDP) — **highest performance** LB.
+
+| Feature | Value |
+|---------|-------|
+| Performance | Millions of requests/sec |
+| Latency | ~100ms (vs ~400ms ALB) |
+| Static IP | One per AZ |
+
+**Target groups:** EC2 instances, Private IPs, ALB (NLB → ALB combo)
+
+**NLB provides:**
+- Static hostname
+- Static IP (one per AZ)
+- Elastic IP support
+
+> 💡 **When to use NLB:** Gaming servers, IoT backends, financial trading platforms — anywhere you need ultra-low latency, millions of requests/sec, or must whitelist a static IP for clients/firewalls.
+
+---
+
+### Gateway Load Balancer (GLB)
+
+Layer 3 (IP) — for **network appliances** (firewalls, IDS, packet inspection).
+
+**Flow:** Traffic → GLB → Security appliances → GLB → Your app
+
+| Feature | Detail |
+|---------|--------|
+| Protocol | GENEVE (port 6081) |
+| Use case | Third-party virtual appliances |
+| Layer | 3 (Network) |
+
+> GENEVE encapsulates packets in UDP for cross-host VM/container communication
+
+---
+
+### Sticky Sessions (Session Affinity)
+
+Same client always routed to same target instance.
+
+| Cookie Type | Description |
+|-------------|-------------|
+| **Application-based** | App sets custom cookie (e.g., `AWSALBAPP`) |
+| **Duration-based** | LB generates cookie (`AWSALB`) with TTL |
+
+> 💡 Use for stateful apps; avoid if possible (prefer stateless + external session store)
+
+---
+
+### Cross-Zone Load Balancing
+
+Distributes traffic evenly across all targets in all AZs, regardless of AZ distribution.
+
+| LB Type | Default | Cost |
+|---------|---------|------|
+| **ALB** | Enabled | Free |
+| **NLB** | Disabled | Charged |
+| **GLB** | Disabled | Charged |
+
+> Without cross-zone: If AZ-1 has 2 instances and AZ-2 has 8, each AZ gets 50% of traffic (unfair distribution)
+
+---
+
+### SSL/TLS & SNI
+
+**SSL Termination:** LB decrypts HTTPS traffic, forwards HTTP to targets (offloads CPU from instances).
+
+| Concept | Description |
+|---------|-------------|
+| **SSL Certificate** | Loaded on LB via ACM (AWS Certificate Manager) |
+| **SNI (Server Name Indication)** | Allows multiple SSL certs on one LB — client indicates hostname, LB selects correct cert |
+
+**SNI Support:**
+- ✅ ALB, NLB (multiple certs)
+- ❌ CLB (one cert only)
+
+> 💡 Use **ACM** for free, auto-renewing public certificates
+
+---
+
+### Connection Draining / Deregistration Delay
+
+Time allowed for in-flight requests to complete when a target is deregistering or unhealthy.
+
+| Setting | Default | Range |
+|---------|---------|-------|
+| **Deregistration Delay** | 300s (5 min) | 0–3600s |
+
+> 💡 Set to **0** for short-lived requests; increase for long uploads/connections
+
+---
+
+## Auto Scaling Group (ASG)
+
+Automatically adjusts EC2 capacity to match demand. **ASG is free** — you pay only for instances.
+
+### Capacity Settings
+
+| Setting | Description |
+|---------|-------------|
+| **Minimum** | Never go below this |
+| **Desired** | Target number of instances |
+| **Maximum** | Never exceed this |
+
+### Launch Template
+
+Defines what to launch:
+
+| Setting | Example |
+|---------|---------|
+| AMI | ami-0123456789 |
+| Instance Type | t3.micro |
+| IAM Role | MyEC2Role |
+| Security Groups | sg-web |
+| User Data | Bootstrap script |
+| Key Pair | my-key |
+| EBS Volumes | gp3, 20 GiB |
+
+> 💡 CloudWatch alarms can trigger ASG scale-out/in based on metrics (CPU, RAM, custom)
+
+### ASG Scaling Policies
+
+| Policy | Description | Example |
+|--------|-------------|---------|
+| **Target Tracking** | Maintain a target metric value | Keep avg CPU at 40% |
+| **Step Scaling** | Scale based on threshold ranges | CPU > 70% → +2, CPU < 30% → -1 |
+| **Scheduled** | Scale at specific times | Add 3 instances every Friday 5PM |
+| **Predictive** | ML-based forecasting | Pre-scale for predicted daily peaks |
+
+- **Predictive Scaling** — ML analyzes historical load patterns, pre-provisions capacity ahead of predicted spikes. Great for recurring patterns (daily/weekly cycles).
+
+### Scaling Metrics
+
+| Metric | Best For |
+|--------|----------|
+| **CPUUtilization** | Compute-bound apps |
+| **RequestCountPerTarget** | Web servers behind ALB |
+| **NetworkIn/Out** | Network-bound apps |
+| **Custom (CloudWatch)** | App-specific (queue depth, etc.) |
+
+---
+
+### ASG Cooldown
+
+Prevents rapid successive scaling actions. Default: **300 seconds**.
+
+> 💡 Use shorter cooldown with faster-booting AMIs; longer for slow startup apps
+
+---
+
+### ASG Instance Refresh
+
+Rolling update when you change Launch Template — replaces instances gradually.
+
+| Setting | Description |
+|---------|-------------|
+| **Min Healthy %** | % of instances that must stay running (e.g., 90%) |
+| **Warm-up** | Time before new instance counts as healthy |
+
+> 💡 Enables zero-downtime deployments for Launch Template changes
