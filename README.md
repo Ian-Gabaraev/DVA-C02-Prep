@@ -691,21 +691,21 @@ Serverless connection pooler in front of RDS/Aurora.
 <details>
 <summary>Is IAM a global or regional service?</summary>
 
-**Global** — IAM users, groups, roles, and policies are not region-specific.
+> ✅ **Global** — IAM users, groups, roles, and policies are not region-specific.
 
 </details>
 
 <details>
 <summary>Is EBS regional or AZ-specific?</summary>
 
-**AZ-specific** — EBS volumes are bound to a single Availability Zone.
+> ✅ **AZ-specific** — EBS volumes are bound to a single Availability Zone.
 
 </details>
 
 <details>
 <summary>How many AZs does a Region typically have?</summary>
 
-**2-6 AZs** per Region.
+> ✅ **2-6 AZs** per Region.
 
 </details>
 
@@ -714,14 +714,14 @@ Serverless connection pooler in front of RDS/Aurora.
 <details>
 <summary>Can an IAM group contain another group?</summary>
 
-**No** — Groups can only contain users, not other groups.
+> ✅ **No** — Groups can only contain users, not other groups.
 
 </details>
 
 <details>
 <summary>What are IAM Roles used for?</summary>
 
-**Services**, not users. Roles grant permissions to AWS services (e.g., EC2, Lambda) to perform actions.
+> ✅ **Services**, not users. Roles grant permissions to AWS services (e.g., EC2, Lambda) to perform actions.
 
 </details>
 
@@ -730,22 +730,23 @@ Serverless connection pooler in front of RDS/Aurora.
 <details>
 <summary>You're trying to SSH into your EC2 and getting a timeout. What's the most likely issue?</summary>
 
-**Security Group** — Timeout = 100% a security group issue. Check inbound rules for port 22.
+> ✅ **Security Group** — Timeout = 100% a security group issue. Check inbound rules for port 22.
 
 </details>
 
 <details>
 <summary>Which EC2 purchasing option offers up to 90% discount but can be interrupted?</summary>
 
-**Spot Instances** — Cheapest option, but AWS can reclaim when spot price exceeds your bid.
+> ✅ **Spot Instances** — Cheapest option, but AWS can reclaim when spot price exceeds your bid.
 
 </details>
 
 <details>
 <summary>What's the difference between Dedicated Host and Dedicated Instance?</summary>
 
-- **Dedicated Host** — Full server control, see sockets/cores (for BYOL licensing)
-- **Dedicated Instance** — Dedicated hardware, no host visibility
+> ✅ **Dedicated Host** — Full server control, see sockets/cores (for BYOL licensing)
+> 
+> ✅ **Dedicated Instance** — Dedicated hardware, no host visibility
 
 </details>
 
@@ -754,35 +755,35 @@ Serverless connection pooler in front of RDS/Aurora.
 <details>
 <summary>What happens to Instance Store data when you stop an EC2 instance?</summary>
 
-**Data is lost** — Instance Store is ephemeral. Data is lost on stop, terminate, or hardware failure.
+> ✅ **Data is lost** — Instance Store is ephemeral. Data is lost on stop, terminate, or hardware failure.
 
 </details>
 
 <details>
 <summary>Which EBS volume types can be used as boot volumes?</summary>
 
-**SSD types only** — gp2, gp3, io1, io2. HDD types (st1, sc1) cannot be boot volumes.
+> ✅ **SSD types only** — gp2, gp3, io1, io2. HDD types (st1, sc1) cannot be boot volumes.
 
 </details>
 
 <details>
 <summary>What is the max IOPS for gp3?</summary>
 
-**16,000 IOPS** — Can be provisioned independently of volume size.
+> ✅ **16,000 IOPS** — Can be provisioned independently of volume size.
 
 </details>
 
 <details>
 <summary>Can you attach an EBS volume to multiple EC2 instances?</summary>
 
-**Only io1/io2** with Multi-Attach — up to 16 instances, same AZ only.
+> ✅ **Only io1/io2** with Multi-Attach — up to 16 instances, same AZ only.
 
 </details>
 
 <details>
 <summary>EFS is compatible with which operating systems?</summary>
 
-**Linux only** — EFS is POSIX-compliant, not compatible with Windows.
+> ✅ **Linux only** — EFS is POSIX-compliant, not compatible with Windows.
 
 </details>
 
@@ -791,7 +792,7 @@ Serverless connection pooler in front of RDS/Aurora.
 <details>
 <summary>Are AMIs region-specific or global?</summary>
 
-**Region-specific** — Must copy an AMI to use it in another region.
+> ✅ **Region-specific** — Must copy an AMI to use it in another region.
 
 </details>
 
@@ -800,51 +801,53 @@ Serverless connection pooler in front of RDS/Aurora.
 <details>
 <summary>What does ELB stand for and is it a load balancer type?</summary>
 
-**Elastic Load Balancing** — It's the service name, not a LB type. Actual types are ALB, NLB, GLB, CLB.
+> ✅ **Elastic Load Balancing** — It's the service name, not a LB type. Actual types are ALB, NLB, GLB, CLB.
 
 </details>
 
 <details>
 <summary>Which load balancer provides a static IP address?</summary>
 
-**NLB** — Network Load Balancer provides one static IP per AZ. ALB only provides a static DNS hostname.
+> ✅ **NLB** — Network Load Balancer provides one static IP per AZ. ALB only provides a static DNS hostname.
 
 </details>
 
 <details>
 <summary>NLB operates at which OSI layer? ALB?</summary>
 
-- **NLB** — Layer 4 (Transport: TCP, UDP)
-- **ALB** — Layer 7 (Application: HTTP, HTTPS)
+> ✅ **NLB** — Layer 4 (Transport: TCP, UDP)
+> 
+> ✅ **ALB** — Layer 7 (Application: HTTP, HTTPS)
 
 </details>
 
 <details>
 <summary>Will ELB terminate an unhealthy target?</summary>
 
-**No** — ELB only stops routing traffic. ASG with ELB health checks enabled will terminate/replace unhealthy instances.
+> ✅ **No** — ELB only stops routing traffic. ASG with ELB health checks enabled will terminate/replace unhealthy instances.
 
 </details>
 
 <details>
 <summary>Is Cross-Zone Load Balancing enabled by default for ALB? NLB?</summary>
 
-- **ALB** — Enabled by default (free)
-- **NLB** — Disabled by default (charged if enabled)
+> ✅ **ALB** — Enabled by default (free)
+> 
+> ✅ **NLB** — Disabled by default (charged if enabled)
 
 </details>
 
 <details>
 <summary>What is the default ASG cooldown period?</summary>
 
-**300 seconds (5 minutes)** — Prevents rapid successive scaling actions.
+> ✅ **300 seconds (5 minutes)** — Prevents rapid successive scaling actions.
 
 </details>
 
 <details>
 <summary>What scaling policy uses ML to predict load patterns?</summary>
 
-**Predictive Scaling** — Analyzes historical patterns and pre-provisions capacity.
+> ✅ **Predictive Scaling** — Analyzes historical patterns and pre-provisions capacity.
 
 </details>
 
@@ -853,55 +856,55 @@ Serverless connection pooler in front of RDS/Aurora.
 <details>
 <summary>Read Replicas use sync or async replication?</summary>
 
-**ASYNC** — Data is eventually consistent across read replicas.
+> ✅ **ASYNC** — Data is eventually consistent across read replicas.
 
 </details>
 
 <details>
 <summary>Multi-AZ uses sync or async replication?</summary>
 
-**SYNC** — Changes are immediately replicated to standby for disaster recovery.
+> ✅ **SYNC** — Changes are immediately replicated to standby for disaster recovery.
 
 </details>
 
 <details>
 <summary>Can you read from a Multi-AZ standby database?</summary>
 
-**No** — Standby is only for failover. Use Read Replicas for read scaling.
+> ✅ **No** — Standby is only for failover. Use Read Replicas for read scaling.
 
 </details>
 
 <details>
 <summary>How many Read Replicas can RDS have? Aurora?</summary>
 
-Both can have up to **15 Read Replicas**.
+> ✅ Both can have up to **15 Read Replicas**.
 
 </details>
 
 <details>
 <summary>What's the failover time for Aurora?</summary>
 
-**Less than 30 seconds**.
+> ✅ **Less than 30 seconds**.
 
 </details>
 
 <details>
 <summary>How do you encrypt an existing unencrypted RDS database?</summary>
 
-**Snapshot → Copy with encryption → Restore** from encrypted snapshot.
+> ✅ **Snapshot → Copy with encryption → Restore** from encrypted snapshot.
 
 </details>
 
 <details>
 <summary>What is RDS Proxy and when should you use it?</summary>
 
-Serverless connection pooler. Use with **Lambda** to reduce DB connections (Lambda opens many short-lived connections).
+> ✅ Serverless connection pooler. Use with **Lambda** to reduce DB connections (Lambda opens many short-lived connections).
 
 </details>
 
 <details>
 <summary>Is RDS Proxy publicly accessible?</summary>
 
-**No** — It lives inside your VPC only, never publicly accessible.
+> ✅ **No** — It lives inside your VPC only, never publicly accessible.
 
 </details>
