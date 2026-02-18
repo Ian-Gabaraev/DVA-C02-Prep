@@ -317,7 +317,18 @@ LB periodically pings targets to verify they're healthy.
 | **Threshold** | Consecutive successes/failures to change state |
 | **Timeout** | Time to wait for response |
 
-> ⚠️ Unhealthy targets stop receiving traffic but remain registered
+> ⚠️ **ELB does NOT terminate unhealthy targets** — it only stops routing traffic to them
+
+### ASG + ELB Health Checks
+
+ASG can use ELB health status to decide when to terminate/replace instances.
+
+| Health Check Type | Default | Termination Trigger |
+|-------------------|---------|---------------------|
+| **EC2** | ✅ Yes | Instance stopped, impaired, or terminated |
+| **ELB** | ❌ No | Target fails LB health check |
+
+> 💡 Enable ELB health checks on ASG for automatic replacement of app-level failures
 
 ---
 
