@@ -291,6 +291,8 @@ Managed NFS that can be mounted on **multiple EC2 across multiple AZs**.
 
 ## ELB & ASG (Load Balancing & Auto Scaling)
 
+> **Terminology:** ELB (Elastic Load Balancing) is the **service name**, not a load balancer type. The actual LB types are ALB, NLB, GLB, and CLB.
+
 ### OSI Model Quick Reference
 
 | Layer | Name | Protocol/Example | AWS LB |
@@ -312,10 +314,9 @@ Managed NFS that can be mounted on **multiple EC2 across multiple AZs**.
 | **GLB** | 3 | IP (GENEVE) | Firewalls, packet inspection |
 | **CLB** | 4/7 | HTTP, HTTPS, TCP, SSL | Legacy (avoid) |
 
-- Classic Load Balancer (old) - HTTP, HTTPS, TCP and SSL
-- Application Load Balancer - HTTP, HTTPS, WebSocket
-- Network Load Balancer - TCP, TLS, UDP
-- Gateway Load Balancer - IP Protocol
+> ⚠️ **CLB** = Classic Load Balancer, sometimes called "Classic ELB" — adds to the ELB naming confusion. Avoid for new projects.
+
+---
 
 ### ELB Health Checks
 
