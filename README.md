@@ -13,7 +13,7 @@
 | [Storage Comparison](#ebs-vs-efs-vs-instance-store) | EBS vs EFS vs Instance Store |
 | [ELB & ASG](#elb--asg-load-balancing--auto-scaling) | ALB, NLB, GLB, Health Checks, Scaling |
 | [RDS & Aurora](#rds-relational-database-service) | Read Replicas, Multi-AZ, Aurora, Proxy |
-| [Self-Exam Questions](#self-exam-questions) | Test your knowledge |
+| [Self-Exam Questions](#self-exam-questions) | 65+ questions across all DVA-C02 topics |
 
 ---
 
@@ -684,7 +684,7 @@ Serverless connection pooler in front of RDS/Aurora.
 
 ## Self-Exam Questions
 
-*Click to reveal answers*
+*Click to reveal answers. Includes key DVA-C02 topics beyond the notes above.*
 
 ### AWS Global Infrastructure
 
@@ -745,7 +745,7 @@ Serverless connection pooler in front of RDS/Aurora.
 <summary>What's the difference between Dedicated Host and Dedicated Instance?</summary>
 
 > ✅ **Dedicated Host** — Full server control, see sockets/cores (for BYOL licensing)
-> 
+>
 > ✅ **Dedicated Instance** — Dedicated hardware, no host visibility
 
 </details>
@@ -816,7 +816,7 @@ Serverless connection pooler in front of RDS/Aurora.
 <summary>NLB operates at which OSI layer? ALB?</summary>
 
 > ✅ **NLB** — Layer 4 (Transport: TCP, UDP)
-> 
+>
 > ✅ **ALB** — Layer 7 (Application: HTTP, HTTPS)
 
 </details>
@@ -832,7 +832,7 @@ Serverless connection pooler in front of RDS/Aurora.
 <summary>Is Cross-Zone Load Balancing enabled by default for ALB? NLB?</summary>
 
 > ✅ **ALB** — Enabled by default (free)
-> 
+>
 > ✅ **NLB** — Disabled by default (charged if enabled)
 
 </details>
@@ -906,5 +906,395 @@ Serverless connection pooler in front of RDS/Aurora.
 <summary>Is RDS Proxy publicly accessible?</summary>
 
 > ✅ **No** — It lives inside your VPC only, never publicly accessible.
+
+</details>
+
+### Lambda
+
+<details>
+<summary>What is the maximum Lambda execution timeout?</summary>
+
+> ✅ **15 minutes (900 seconds)**.
+
+</details>
+
+<details>
+<summary>What is the maximum Lambda memory allocation?</summary>
+
+> ✅ **10,240 MB (10 GB)**. CPU scales proportionally with memory.
+
+</details>
+
+<details>
+<summary>What is the /tmp directory size limit in Lambda?</summary>
+
+> ✅ **10,240 MB (10 GB)** — Use for temporary file processing.
+
+</details>
+
+<details>
+<summary>What happens if Lambda runs out of memory?</summary>
+
+> ✅ Execution fails with **"Process exited before completing request"** or **OutOfMemoryError**.
+
+</details>
+
+<details>
+<summary>What are Lambda Layers used for?</summary>
+
+> ✅ Share code/dependencies across multiple functions. Up to **5 layers** per function.
+
+</details>
+
+<details>
+<summary>How do you give Lambda access to resources in a VPC?</summary>
+
+> ✅ Configure VPC settings (subnets + security groups). Lambda creates ENIs in your VPC.
+
+</details>
+
+<details>
+<summary>What's the difference between synchronous and asynchronous Lambda invocation?</summary>
+
+> ✅ **Sync** — Caller waits for response (API Gateway, SDK invoke)
+> 
+> ✅ **Async** — Caller doesn't wait, Lambda handles retries (S3, SNS, EventBridge)
+
+</details>
+
+<details>
+<summary>How many retries does Lambda do for async invocations?</summary>
+
+> ✅ **2 retries** (3 total attempts). Failed events can go to DLQ or on-failure destination.
+
+</details>
+
+### API Gateway
+
+<details>
+<summary>What are the three API Gateway endpoint types?</summary>
+
+> ✅ **Edge-optimized** (CloudFront), **Regional**, **Private** (VPC only)
+
+</details>
+
+<details>
+<summary>What is the API Gateway default timeout?</summary>
+
+> ✅ **29 seconds** — Cannot exceed this even if Lambda timeout is higher.
+
+</details>
+
+<details>
+<summary>How do you handle CORS in API Gateway?</summary>
+
+> ✅ Enable CORS on the resource/method. API Gateway adds `Access-Control-Allow-Origin` headers.
+
+</details>
+
+<details>
+<summary>What's the difference between REST API and HTTP API in API Gateway?</summary>
+
+> ✅ **HTTP API** — Cheaper, faster, simpler (JWT auth, Lambda proxy)
+> 
+> ✅ **REST API** — Full features (caching, request validation, usage plans, API keys)
+
+</details>
+
+<details>
+<summary>How do you implement rate limiting in API Gateway?</summary>
+
+> ✅ **Usage Plans + API Keys** — Set throttling limits per client.
+
+</details>
+
+### DynamoDB
+
+<details>
+<summary>What are the two capacity modes in DynamoDB?</summary>
+
+> ✅ **Provisioned** (set RCU/WCU) and **On-Demand** (pay per request).
+
+</details>
+
+<details>
+<summary>What is the maximum item size in DynamoDB?</summary>
+
+> ✅ **400 KB** per item.
+
+</details>
+
+<details>
+<summary>What's the difference between Query and Scan?</summary>
+
+> ✅ **Query** — Efficient, uses partition key (and optionally sort key)
+> 
+> ✅ **Scan** — Reads entire table, expensive, use sparingly
+
+</details>
+
+<details>
+<summary>What are DynamoDB Streams used for?</summary>
+
+> ✅ Capture item-level changes (insert, update, delete). Trigger Lambda, replicate data, etc.
+
+</details>
+
+<details>
+<summary>What is a GSI vs LSI in DynamoDB?</summary>
+
+> ✅ **GSI** — Different partition key, can be added anytime, has own throughput
+> 
+> ✅ **LSI** — Same partition key, must be created at table creation, shares table throughput
+
+</details>
+
+<details>
+<summary>How do you implement optimistic locking in DynamoDB?</summary>
+
+> ✅ Use **conditional writes** with a version attribute. Write fails if version doesn't match.
+
+</details>
+
+### S3
+
+<details>
+<summary>What is the maximum object size in S3?</summary>
+
+> ✅ **5 TB**. Use multipart upload for objects > 100 MB (required > 5 GB).
+
+</details>
+
+<details>
+<summary>What is S3 Transfer Acceleration?</summary>
+
+> ✅ Uses CloudFront edge locations to speed up uploads over long distances.
+
+</details>
+
+<details>
+<summary>What's the difference between S3 Standard-IA and S3 One Zone-IA?</summary>
+
+> ✅ **Standard-IA** — Multi-AZ, for infrequent access
+> 
+> ✅ **One Zone-IA** — Single AZ, cheaper, data lost if AZ fails
+
+</details>
+
+<details>
+<summary>What is S3 Object Lock?</summary>
+
+> ✅ WORM model (Write Once Read Many). Prevents object deletion/modification for retention period.
+
+</details>
+
+<details>
+<summary>How do you enable versioning on an S3 bucket?</summary>
+
+> ✅ Enable at bucket level. Once enabled, can only be suspended (not disabled). Protects against accidental deletes.
+
+</details>
+
+### SQS & SNS
+
+<details>
+<summary>What is the default visibility timeout for SQS?</summary>
+
+> ✅ **30 seconds** — Time a message is hidden after being read.
+
+</details>
+
+<details>
+<summary>What is the maximum retention period for SQS messages?</summary>
+
+> ✅ **14 days** (default: 4 days).
+
+</details>
+
+<details>
+<summary>What's the difference between Standard and FIFO SQS queues?</summary>
+
+> ✅ **Standard** — Unlimited throughput, at-least-once delivery, best-effort ordering
+> 
+> ✅ **FIFO** — 300 msg/s (3000 with batching), exactly-once, strict ordering
+
+</details>
+
+<details>
+<summary>What is a Dead Letter Queue (DLQ)?</summary>
+
+> ✅ Queue for messages that failed processing after max retries. Helps debug failures.
+
+</details>
+
+<details>
+<summary>What's the difference between SQS and SNS?</summary>
+
+> ✅ **SQS** — Queue, pull-based, messages persist until processed
+> 
+> ✅ **SNS** — Pub/sub, push-based, messages sent immediately to all subscribers
+
+</details>
+
+<details>
+<summary>What is the SNS + SQS fan-out pattern?</summary>
+
+> ✅ SNS topic pushes to multiple SQS queues. Decouples publishers from consumers, enables parallel processing.
+
+</details>
+
+### CI/CD (CodeCommit, CodeBuild, CodeDeploy, CodePipeline)
+
+<details>
+<summary>What is the buildspec.yml file?</summary>
+
+> ✅ CodeBuild configuration file. Defines build phases (install, pre_build, build, post_build) and artifacts.
+
+</details>
+
+<details>
+<summary>What is the appspec.yml/appspec.yaml file?</summary>
+
+> ✅ CodeDeploy configuration. Defines deployment lifecycle hooks and file mappings.
+
+</details>
+
+<details>
+<summary>What deployment types does CodeDeploy support for EC2?</summary>
+
+> ✅ **In-place** (rolling) and **Blue/Green** (traffic shift to new instances).
+
+</details>
+
+<details>
+<summary>What deployment types does CodeDeploy support for Lambda?</summary>
+
+> ✅ **AllAtOnce**, **Canary** (x% then 100%), **Linear** (x% every n minutes).
+
+</details>
+
+### CloudFormation & SAM
+
+<details>
+<summary>What is the intrinsic function to reference another resource in CloudFormation?</summary>
+
+> ✅ `!Ref` or `Ref:` — Returns the physical ID of the resource.
+
+</details>
+
+<details>
+<summary>What does !GetAtt do in CloudFormation?</summary>
+
+> ✅ Gets an attribute from a resource (e.g., `!GetAtt MyBucket.Arn`).
+
+</details>
+
+<details>
+<summary>What is AWS SAM?</summary>
+
+> ✅ **Serverless Application Model** — Simplified CloudFormation for serverless (Lambda, API Gateway, DynamoDB).
+
+</details>
+
+<details>
+<summary>What command packages and deploys a SAM application?</summary>
+
+> ✅ `sam build` → `sam deploy` (or `sam deploy --guided` for interactive).
+
+</details>
+
+### CloudWatch & X-Ray
+
+<details>
+<summary>What is the minimum resolution for CloudWatch custom metrics?</summary>
+
+> ✅ **1 second** (high-resolution). Standard is 1 minute.
+
+</details>
+
+<details>
+<summary>How long are CloudWatch Logs retained by default?</summary>
+
+> ✅ **Forever** (never expire). Must set retention policy to auto-delete.
+
+</details>
+
+<details>
+<summary>What is X-Ray used for?</summary>
+
+> ✅ **Distributed tracing** — Visualize requests as they travel through your application. Debug latency issues.
+
+</details>
+
+<details>
+<summary>What is the X-Ray daemon?</summary>
+
+> ✅ Runs on EC2/ECS, collects trace data from SDK and sends to X-Ray service. Lambda has it built-in.
+
+</details>
+
+<details>
+<summary>What are X-Ray segments and subsegments?</summary>
+
+> ✅ **Segment** — Work done by a service/resource
+> 
+> ✅ **Subsegment** — Granular breakdown (e.g., external HTTP call, DB query)
+
+</details>
+
+### Cognito
+
+<details>
+<summary>What's the difference between Cognito User Pools and Identity Pools?</summary>
+
+> ✅ **User Pools** — Authentication (sign-up, sign-in, get JWT tokens)
+> 
+> ✅ **Identity Pools** — Authorization (exchange tokens for temporary AWS credentials)
+
+</details>
+
+<details>
+<summary>How do you authenticate API Gateway with Cognito?</summary>
+
+> ✅ Use **Cognito User Pool Authorizer** — Validates JWT tokens from User Pool.
+
+</details>
+
+### KMS & Encryption
+
+<details>
+<summary>What are the two types of KMS keys?</summary>
+
+> ✅ **AWS managed** (aws/service-name, free) and **Customer managed** (you control rotation, policies).
+
+</details>
+
+<details>
+<summary>What is envelope encryption?</summary>
+
+> ✅ Data encrypted with **data key**, data key encrypted with **KMS key**. Used for large data.
+
+</details>
+
+<details>
+<summary>What is the GenerateDataKey API?</summary>
+
+> ✅ Returns a plaintext data key + encrypted copy. Use plaintext to encrypt data, store encrypted key with data.
+
+</details>
+
+### EventBridge
+
+<details>
+<summary>What is EventBridge (formerly CloudWatch Events)?</summary>
+
+> ✅ Serverless event bus. Route events from AWS services, SaaS, custom apps to targets (Lambda, SQS, etc.).
+
+</details>
+
+<details>
+<summary>What is an EventBridge rule?</summary>
+
+> ✅ Matches incoming events (by pattern or schedule) and routes to target(s).
 
 </details>
