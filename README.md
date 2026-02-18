@@ -387,6 +387,18 @@ Layer 4 (TCP/UDP) — **highest performance** LB.
 
 > 💡 **When to use NLB:** Gaming servers, IoT backends, financial trading platforms — anywhere you need ultra-low latency, millions of requests/sec, or must whitelist a static IP for clients/firewalls.
 
+### ALB vs NLB Routing
+
+| Routing By | ALB | NLB |
+|------------|-----|-----|
+| URL path | ✅ | ❌ |
+| Hostname | ✅ | ❌ |
+| Query strings | ✅ | ❌ |
+| HTTP headers | ✅ | ❌ |
+| Port | ✅ | ✅ |
+
+> NLB = Layer 4 (sees packets, not HTTP). ALB = Layer 7 (sees HTTP content). **Content-based routing → ALB. Static IP + performance → NLB.**
+
 ---
 
 ### Gateway Load Balancer (GLB)
