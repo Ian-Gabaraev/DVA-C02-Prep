@@ -13,7 +13,8 @@
 | [Storage Comparison](#ebs-vs-efs-vs-instance-store) | EBS vs EFS vs Instance Store |
 | [ELB & ASG](#elb--asg-load-balancing--auto-scaling) | ALB, NLB, GLB, Health Checks, Scaling |
 | [RDS & Aurora](#rds-relational-database-service) | Read Replicas, Multi-AZ, Aurora, Proxy |
-| [Self-Exam Questions](#self-exam-questions) | 65+ questions across all DVA-C02 topics |
+| [ElastiCache](#aws-elasticache) | Redis vs Memcached, Caching Strategies |
+| [Self-Exam Questions](#self-exam-questions) | 75+ questions across all DVA-C02 topics |
 
 ---
 
@@ -600,6 +601,8 @@ Managed relational database — AWS handles patching, backups, scaling, HA, moni
 | Encryption (at-rest & in-flight) | ✅ |
 | Performance Insights | ✅ |
 
+It supports MySQL, Postgres, Oracle, MariaDB, MS SQL Server, Aurora.
+
 > ⚠️ **No SSH access** to the underlying instance
 
 ### Storage Auto Scaling
@@ -681,6 +684,113 @@ Serverless connection pooler in front of RDS/Aurora.
 > 💡 Great for Lambda → RDS (Lambda opens many short-lived connections)
 
 ---
+
+---
+
+## AWS ElastiCache
+
+Managed in-memory caching — **Redis** or **Memcached**.
+
+### Redis vs Memcached
+
+| Feature | Redis | Memcached |
+|---------|-------|----------|
+| **Multi-AZ** | ✅ | ❌ |
+| **Auto Failover** | ✅ | ❌ |
+| **Replication** | ✅ | ❌ |
+| **Persistence** | ✅ | ❌ |
+| **Backup & Restore** | ✅ | ✅ |
+| **Data structures** | Complex (lists, sets, sorted sets) | Simple key-value |
+| **Sharding** | Cluster mode | Multi-node |
+
+> 💡 **Exam tip:** Use **Redis** for HA, persistence, complex data. Use **Memcached** for simple caching, multi-threaded, horizontal scaling.
+
+---
+
+### Caching Considerations
+
+| Question | Consider |
+|----------|----------|
+| **Safe to cache?** | What if stale data causes security/business issues? |
+| **Effective?** | Best for slow-changing, frequently-read data |
+| **Structure fit?** | Key-value lookups work best; complex joins may not |
+| **TTL strategy?** | How long before data expires? |
+
+---
+
+### Caching Design Patterns
+
+#### Lazy Loading (Cache-Aside)
+
+```
+App → Cache (miss?) → DB → Cache → App
+```
+
+| Pros | Cons |
+|------|------|
+| Only requested data cached | Cache miss = 3 network calls |
+| Node failure not fatal | Stale data possible |
+| Simple to implement | Must handle cache invalidation |
+
+---
+
+#### Write-Through
+
+```
+App → DB + Cache (write both)
+```
+
+| Pros | Cons |
+|------|------|
+| Cache always current | Write penalty (2 writes) |
+| No stale data | Cache churn (data may never be read) |
+| | Missing data until first write |
+
+> 💡 Combine **Write-Through + Lazy Loading** for best results
+
+---
+
+#### TTL (Time-To-Live)
+
+Set expiration on cached items. Balance between:
+- **Short TTL** — Fresh data, more cache misses
+- **Long TTL** — Fewer misses, risk of stale data
+
+---
+
+#### Write-Behind (Write-Back)
+
+```
+App → Cache → (async) → DB
+```
+
+| Pros | Cons |
+|------|------|
+| Fast writes (async to DB) | Data loss risk if cache fails |
+| Reduces DB load | Complex to implement |
+| Good for write-heavy workloads | Eventually consistent |
+
+---
+
+#### Read-Through
+
+```
+App → Cache (auto-fetches from DB on miss)
+```
+
+Cache sits between app and DB. On miss, cache itself fetches from DB and stores. Simpler app logic, but requires cache to understand DB.
+
+---
+
+### ElastiCache Use Cases
+
+| Use Case | Pattern |
+|----------|--------|
+| Session storage | Redis with TTL |
+| Database query caching | Lazy Loading + TTL |
+| Real-time leaderboards | Redis Sorted Sets |
+| Pub/Sub messaging | Redis Pub/Sub |
+| Rate limiting | Redis counters with TTL |
 
 ## Self-Exam Questions
 
@@ -957,7 +1067,7 @@ Serverless connection pooler in front of RDS/Aurora.
 <summary>What's the difference between synchronous and asynchronous Lambda invocation?</summary>
 
 > ✅ **Sync** — Caller waits for response (API Gateway, SDK invoke)
-> 
+>
 > ✅ **Async** — Caller doesn't wait, Lambda handles retries (S3, SNS, EventBridge)
 
 </details>
@@ -996,7 +1106,7 @@ Serverless connection pooler in front of RDS/Aurora.
 <summary>What's the difference between REST API and HTTP API in API Gateway?</summary>
 
 > ✅ **HTTP API** — Cheaper, faster, simpler (JWT auth, Lambda proxy)
-> 
+>
 > ✅ **REST API** — Full features (caching, request validation, usage plans, API keys)
 
 </details>
@@ -1028,7 +1138,7 @@ Serverless connection pooler in front of RDS/Aurora.
 <summary>What's the difference between Query and Scan?</summary>
 
 > ✅ **Query** — Efficient, uses partition key (and optionally sort key)
-> 
+>
 > ✅ **Scan** — Reads entire table, expensive, use sparingly
 
 </details>
@@ -1044,7 +1154,7 @@ Serverless connection pooler in front of RDS/Aurora.
 <summary>What is a GSI vs LSI in DynamoDB?</summary>
 
 > ✅ **GSI** — Different partition key, can be added anytime, has own throughput
-> 
+>
 > ✅ **LSI** — Same partition key, must be created at table creation, shares table throughput
 
 </details>
@@ -1076,7 +1186,7 @@ Serverless connection pooler in front of RDS/Aurora.
 <summary>What's the difference between S3 Standard-IA and S3 One Zone-IA?</summary>
 
 > ✅ **Standard-IA** — Multi-AZ, for infrequent access
-> 
+>
 > ✅ **One Zone-IA** — Single AZ, cheaper, data lost if AZ fails
 
 </details>
@@ -1115,7 +1225,7 @@ Serverless connection pooler in front of RDS/Aurora.
 <summary>What's the difference between Standard and FIFO SQS queues?</summary>
 
 > ✅ **Standard** — Unlimited throughput, at-least-once delivery, best-effort ordering
-> 
+>
 > ✅ **FIFO** — 300 msg/s (3000 with batching), exactly-once, strict ordering
 
 </details>
@@ -1131,7 +1241,7 @@ Serverless connection pooler in front of RDS/Aurora.
 <summary>What's the difference between SQS and SNS?</summary>
 
 > ✅ **SQS** — Queue, pull-based, messages persist until processed
-> 
+>
 > ✅ **SNS** — Pub/sub, push-based, messages sent immediately to all subscribers
 
 </details>
@@ -1237,7 +1347,7 @@ Serverless connection pooler in front of RDS/Aurora.
 <summary>What are X-Ray segments and subsegments?</summary>
 
 > ✅ **Segment** — Work done by a service/resource
-> 
+>
 > ✅ **Subsegment** — Granular breakdown (e.g., external HTTP call, DB query)
 
 </details>
@@ -1248,7 +1358,7 @@ Serverless connection pooler in front of RDS/Aurora.
 <summary>What's the difference between Cognito User Pools and Identity Pools?</summary>
 
 > ✅ **User Pools** — Authentication (sign-up, sign-in, get JWT tokens)
-> 
+>
 > ✅ **Identity Pools** — Authorization (exchange tokens for temporary AWS credentials)
 
 </details>
@@ -1296,5 +1406,51 @@ Serverless connection pooler in front of RDS/Aurora.
 <summary>What is an EventBridge rule?</summary>
 
 > ✅ Matches incoming events (by pattern or schedule) and routes to target(s).
+
+</details>
+
+### ElastiCache
+
+<details>
+<summary>What's the difference between Redis and Memcached in ElastiCache?</summary>
+
+> ✅ **Redis** — Multi-AZ, replication, persistence, complex data types
+>
+> ✅ **Memcached** — Simple key-value, multi-threaded, no persistence, horizontal scaling
+
+</details>
+
+<details>
+<summary>What is Lazy Loading (Cache-Aside) pattern?</summary>
+
+> ✅ App checks cache first → on miss, fetches from DB → stores in cache → returns. Only requested data is cached.
+
+</details>
+
+<details>
+<summary>What is Write-Through caching?</summary>
+
+> ✅ Write to cache AND DB on every update. Cache always current, but write penalty and cache churn.
+
+</details>
+
+<details>
+<summary>What is the main drawback of Lazy Loading?</summary>
+
+> ✅ **Cache miss = 3 network calls** (check cache, query DB, write cache). Also, data can become stale.
+
+</details>
+
+<details>
+<summary>When would you use Redis over Memcached?</summary>
+
+> ✅ When you need: Multi-AZ, persistence, complex data structures (sorted sets, lists), pub/sub, or backup/restore.
+
+</details>
+
+<details>
+<summary>What is TTL in caching?</summary>
+
+> ✅ **Time-To-Live** — Automatic expiration of cached items. Balance freshness vs cache hit rate.
 
 </details>
