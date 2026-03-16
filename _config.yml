@@ -1,4 +1,12 @@
 title: AWS DVA-C02 Study Notes
-description: Personal notes for AWS Developer Associate certification
-theme: jekyll-theme-cayman
+description: Comprehensive study guide for AWS Developer Associate certification — covering Lambda, API Gateway, DynamoDB, S3, and all major exam topics with 100+ practice questions.
+theme: jekyll-theme-hacker
 markdown: kramdown
+
+# Navigation
+header_pages:
+  - README.md
+  - quiz.html
+
+# Build settings
+show_downloads: false

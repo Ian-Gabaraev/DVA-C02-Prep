@@ -1,0 +1,283 @@
+---
+layout: default
+title: AWS DVA-C02 Study Guide
+---
+
+<style>
+  .hero {
+    text-align: center;
+    padding: 60px 20px;
+    margin-bottom: 40px;
+    background: linear-gradient(135deg, rgba(0, 255, 0, 0.05) 0%, rgba(0, 0, 0, 0.3) 100%);
+    border: 1px solid #00ff00;
+    border-radius: 10px;
+  }
+
+  .hero h1 {
+    font-size: 2.5rem;
+    color: #00ff00;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    margin-bottom: 20px;
+  }
+
+  .hero p {
+    font-size: 1.2rem;
+    color: #b5e853;
+    max-width: 700px;
+    margin: 0 auto 30px;
+  }
+
+  .cta-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .cta-btn {
+    display: inline-block;
+    padding: 15px 40px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+  }
+
+  .cta-btn.primary {
+    background: #00ff00;
+    color: #0d0d0d;
+    border: 2px solid #00ff00;
+  }
+
+  .cta-btn.primary:hover {
+    background: transparent;
+    color: #00ff00;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+  }
+
+  .cta-btn.secondary {
+    background: transparent;
+    color: #00ff00;
+    border: 2px solid #00ff00;
+  }
+
+  .cta-btn.secondary:hover {
+    background: rgba(0, 255, 0, 0.1);
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 50px;
+  }
+
+  .feature-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 30px;
+    transition: all 0.3s ease;
+  }
+
+  .feature-card:hover {
+    border-color: #00ff00;
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+  }
+
+  .feature-card h3 {
+    color: #00ff00;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+  }
+
+  .feature-card p {
+    color: #999;
+    line-height: 1.6;
+  }
+
+  .feature-icon {
+    font-size: 2rem;
+    margin-bottom: 15px;
+  }
+
+  .topics-section {
+    margin-bottom: 50px;
+  }
+
+  .topics-section h2 {
+    color: #00ff00;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 1.8rem;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+  }
+
+  .topics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+  }
+
+  .topic-item {
+    background: rgba(0, 255, 0, 0.05);
+    border: 1px solid #333;
+    border-radius: 5px;
+    padding: 15px 20px;
+    color: #b5e853;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: block;
+  }
+
+  .topic-item:hover {
+    border-color: #00ff00;
+    background: rgba(0, 255, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    flex-wrap: wrap;
+    margin: 50px 0;
+    padding: 30px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+  }
+
+  .stat-item {
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 2.5rem;
+    color: #00ff00;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+  }
+
+  .stat-label {
+    color: #666;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .footer-links {
+    text-align: center;
+    margin-top: 50px;
+    padding-top: 30px;
+    border-top: 1px solid #333;
+  }
+
+  .footer-links a {
+    color: #b5e853;
+    margin: 0 15px;
+    text-decoration: none;
+  }
+
+  .footer-links a:hover {
+    color: #00ff00;
+  }
+
+  @media (max-width: 600px) {
+    .hero h1 {
+      font-size: 1.8rem;
+    }
+
+    .stats {
+      gap: 30px;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+    }
+  }
+</style>
+
+<div class="hero">
+  <h1>AWS DVA-C02 Study Guide</h1>
+  <p>Master the AWS Developer Associate certification with comprehensive notes, real-world examples, and 100+ interactive practice questions.</p>
+  <div class="cta-buttons">
+    <a href="quiz.html" class="cta-btn primary">Take the Quiz</a>
+    <a href="#topics" class="cta-btn secondary">Start Learning</a>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat-item">
+    <div class="stat-number">25+</div>
+    <div class="stat-label">AWS Services</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number">100+</div>
+    <div class="stat-label">Practice Questions</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number">3000+</div>
+    <div class="stat-label">Lines of Notes</div>
+  </div>
+</div>
+
+<div class="features">
+  <div class="feature-card">
+    <div class="feature-icon">📚</div>
+    <h3>Comprehensive Notes</h3>
+    <p>Detailed coverage of all DVA-C02 exam topics with tables, code examples, and exam tips.</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🧠</div>
+    <h3>Interactive Quiz</h3>
+    <p>Test your knowledge with 100+ questions, topic filtering, and instant explanations.</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">⚡</div>
+    <h3>Quick Reference</h3>
+    <p>Tables and summaries for fast review of key concepts, limits, and comparisons.</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🎯</div>
+    <h3>Exam-Focused</h3>
+    <p>Highlights common exam scenarios and tricky questions based on real exam patterns.</p>
+  </div>
+</div>
+
+<div class="topics-section" id="topics">
+  <h2>Study Topics</h2>
+  <div class="topics-grid">
+    <a href="./#aws-global-infrastructure" class="topic-item">AWS Infrastructure</a>
+    <a href="./#iam-identity--access-management" class="topic-item">IAM</a>
+    <a href="./#ec2-elastic-compute-cloud" class="topic-item">EC2</a>
+    <a href="./#ebs-elastic-block-store" class="topic-item">EBS & Storage</a>
+    <a href="./#elb--asg-load-balancing--auto-scaling" class="topic-item">ELB & ASG</a>
+    <a href="./#rds-relational-database-service" class="topic-item">RDS & Aurora</a>
+    <a href="./#s3-simple-storage-service" class="topic-item">S3</a>
+    <a href="./#aws-lambda" class="topic-item">Lambda</a>
+    <a href="./#api-gateway" class="topic-item">API Gateway</a>
+    <a href="./#dynamodb" class="topic-item">DynamoDB</a>
+    <a href="./#sqs-simple-queue-service" class="topic-item">SQS & SNS</a>
+    <a href="./#kinesis" class="topic-item">Kinesis</a>
+    <a href="./#step-functions" class="topic-item">Step Functions</a>
+    <a href="./#ecs-fargate--ecr-containers" class="topic-item">ECS & Containers</a>
+    <a href="./#cloudformation" class="topic-item">CloudFormation</a>
+    <a href="./#aws-sam-serverless-application-model" class="topic-item">SAM</a>
+    <a href="./#cicd-codecommit-codebuild-codedeploy-codepipeline" class="topic-item">CI/CD</a>
+    <a href="./#cloudwatch" class="topic-item">CloudWatch</a>
+    <a href="./#x-ray" class="topic-item">X-Ray</a>
+    <a href="./#cognito" class="topic-item">Cognito</a>
+    <a href="./#kms-key-management-service" class="topic-item">KMS</a>
+    <a href="./#eventbridge" class="topic-item">EventBridge</a>
+    <a href="./#elastic-beanstalk" class="topic-item">Elastic Beanstalk</a>
+    <a href="./#aws-elasticache" class="topic-item">ElastiCache</a>
+  </div>
+</div>
+
+<div class="footer-links">
+  <a href="./">📖 Study Notes</a>
+  <a href="quiz.html">🧠 Take Quiz</a>
+  <a href="https://aws.amazon.com/certification/certified-developer-associate/" target="_blank">🔗 AWS Exam Info</a>
+</div>

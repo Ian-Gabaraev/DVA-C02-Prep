@@ -14,7 +14,28 @@
 | [ELB & ASG](#elb--asg-load-balancing--auto-scaling) | ALB, NLB, GLB, Health Checks, Scaling |
 | [RDS & Aurora](#rds-relational-database-service) | Read Replicas, Multi-AZ, Aurora, Proxy |
 | [ElastiCache](#aws-elasticache) | Redis vs Memcached, Caching Strategies |
-| [Self-Exam Questions](#self-exam-questions) | 75+ questions across all DVA-C02 topics |
+| [S3](#s3-simple-storage-service) | Storage Classes, Security, Replication, Performance |
+| [Lambda](#aws-lambda) | Invocations, Concurrency, Layers, VPC |
+| [API Gateway](#api-gateway) | Endpoints, Integrations, Security, Caching |
+| [DynamoDB](#dynamodb) | Capacity, Indexes, Streams, DAX |
+| [SQS](#sqs-simple-queue-service) | Standard/FIFO, Visibility, DLQ |
+| [SNS](#sns-simple-notification-service) | Fan-out, Filtering, FIFO |
+| [Kinesis](#kinesis) | Streams, Firehose, Analytics |
+| [Step Functions](#step-functions) | State Machines, Workflows |
+| [Containers](#ecs-fargate--ecr-containers) | ECS, Fargate, ECR |
+| [CloudFormation](#cloudformation) | Templates, Functions, Stacks |
+| [SAM](#aws-sam-serverless-application-model) | Serverless Templates, CLI |
+| [CI/CD](#cicd-codecommit-codebuild-codedeploy-codepipeline) | CodeCommit, CodeBuild, CodeDeploy, CodePipeline |
+| [CloudWatch](#cloudwatch) | Metrics, Logs, Alarms |
+| [X-Ray](#x-ray) | Distributed Tracing, Sampling |
+| [Cognito](#cognito) | User Pools, Identity Pools |
+| [KMS](#kms-key-management-service) | Encryption, Key Types, Envelope Encryption |
+| [Secrets & Parameters](#secrets-manager--ssm-parameter-store) | Secrets Manager, SSM Parameter Store |
+| [EventBridge](#eventbridge) | Event Bus, Rules, Targets |
+| [Elastic Beanstalk](#elastic-beanstalk) | Deployment Policies, Extensions |
+| [Self-Exam Questions](#self-exam-questions) | 100+ questions across all DVA-C02 topics |
+
+**[Take Interactive Quiz](quiz.html)** — Test your knowledge with an interactive quiz!
 
 ---
 
@@ -791,6 +812,1300 @@ Cache sits between app and DB. On miss, cache itself fetches from DB and stores.
 | Real-time leaderboards | Redis Sorted Sets |
 | Pub/Sub messaging | Redis Pub/Sub |
 | Rate limiting | Redis counters with TTL |
+
+---
+
+## S3 (Simple Storage Service)
+
+Object storage with **unlimited storage**, highly durable (99.999999999% — 11 9s).
+
+### Key Concepts
+
+| Concept | Description |
+|---------|-------------|
+| **Bucket** | Container for objects, globally unique name |
+| **Object** | File + metadata, identified by key (full path) |
+| **Key** | Full path including "folders" (e.g., `images/2024/photo.jpg`) |
+| **Max object size** | 5 TB (use multipart upload for >100 MB, required >5 GB) |
+
+### Storage Classes
+
+| Class | Durability | Availability | Use Case |
+|-------|------------|--------------|----------|
+| **S3 Standard** | 11 9s | 99.99% | Frequently accessed data |
+| **S3 Intelligent-Tiering** | 11 9s | 99.9% | Unknown/changing access patterns |
+| **S3 Standard-IA** | 11 9s | 99.9% | Infrequent access, rapid retrieval |
+| **S3 One Zone-IA** | 11 9s | 99.5% | Infrequent, non-critical, reproducible |
+| **S3 Glacier Instant** | 11 9s | 99.9% | Archive, millisecond retrieval |
+| **S3 Glacier Flexible** | 11 9s | 99.99% | Archive, minutes to hours retrieval |
+| **S3 Glacier Deep Archive** | 11 9s | 99.99% | Long-term archive, 12-48 hour retrieval |
+
+> 💡 Use **Lifecycle Policies** to automatically transition objects between classes
+
+### S3 Security
+
+| Layer | Mechanism |
+|-------|-----------|
+| **User-based** | IAM policies |
+| **Resource-based** | Bucket policies (JSON), Object ACLs, Bucket ACLs |
+| **Encryption** | SSE-S3, SSE-KMS, SSE-C, client-side |
+
+**Bucket Policy Structure:**
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": "*",
+    "Action": "s3:GetObject",
+    "Resource": "arn:aws:s3:::my-bucket/*"
+  }]
+}
+```
+
+### S3 Encryption
+
+| Type | Key Management | Use Case |
+|------|----------------|----------|
+| **SSE-S3** | AWS managed | Default encryption |
+| **SSE-KMS** | KMS key | Audit trail, fine control |
+| **SSE-C** | Customer-provided | Full key control |
+| **Client-side** | Encrypt before upload | Maximum control |
+
+> 💡 **SSE-KMS** has API call limits (quota). For high throughput, consider SSE-S3.
+
+### S3 Versioning
+
+- Enable at bucket level
+- Protects against unintentional deletes (delete marker, not actual delete)
+- Once enabled, can only be suspended (not disabled)
+- `null` version ID for objects uploaded before versioning
+
+### S3 Replication
+
+| Type | Description |
+|------|-------------|
+| **CRR** (Cross-Region) | Compliance, lower latency, replication across accounts |
+| **SRR** (Same-Region) | Log aggregation, live replication between prod/test |
+
+**Requirements:** Versioning enabled on both buckets, proper IAM permissions
+
+> ⚠️ Only new objects replicated after enabling. Use **S3 Batch Replication** for existing objects.
+
+### S3 Event Notifications
+
+Trigger actions on bucket events (PUT, DELETE, etc.):
+
+| Target | Use Case |
+|--------|----------|
+| **SNS** | Fan-out to multiple subscribers |
+| **SQS** | Queue for processing |
+| **Lambda** | Real-time processing |
+| **EventBridge** | Advanced filtering, multiple destinations |
+
+### S3 Performance
+
+| Feature | Description |
+|---------|-------------|
+| **Multi-part upload** | Parallelize uploads, recommended >100 MB |
+| **Transfer Acceleration** | Use CloudFront edge locations for faster uploads |
+| **Byte-range fetches** | Parallelize downloads by requesting byte ranges |
+| **S3 Select / Glacier Select** | Retrieve subset of data using SQL |
+
+**Baseline:** 3,500 PUT/COPY/POST/DELETE and 5,500 GET/HEAD requests per second **per prefix**.
+
+### S3 Pre-signed URLs
+
+Temporary access to private objects without changing bucket policy.
+
+```bash
+aws s3 presign s3://bucket/object --expires-in 3600
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| **Expires** | 1 second to 7 days (default: 1 hour) |
+| **Permissions** | Inherits permissions of the user who generated it |
+
+---
+
+## AWS Lambda
+
+Serverless compute — run code without managing servers.
+
+### Key Limits
+
+| Limit | Value |
+|-------|-------|
+| **Memory** | 128 MB – 10,240 MB (10 GB) |
+| **Timeout** | Max 15 minutes (900 seconds) |
+| **Environment variables** | 4 KB total |
+| **/tmp storage** | 512 MB – 10,240 MB |
+| **Deployment package** | 50 MB zipped, 250 MB unzipped |
+| **Concurrent executions** | 1,000 default (can increase) |
+| **Layers** | Up to 5 per function |
+
+> 💡 CPU scales proportionally with memory. More memory = more CPU = faster execution.
+
+### Lambda Invocation Types
+
+| Type | Behavior | Retries | Examples |
+|------|----------|---------|----------|
+| **Synchronous** | Caller waits for response | None (caller handles) | API Gateway, SDK |
+| **Asynchronous** | Fire and forget | 2 retries (3 total) | S3, SNS, EventBridge |
+| **Event Source Mapping** | Lambda polls source | Depends on source | SQS, Kinesis, DynamoDB Streams |
+
+### Asynchronous Invocation
+
+```
+Event → Lambda (internal queue) → [Retry 1] → [Retry 2] → DLQ/Destination
+```
+
+| Setting | Description |
+|---------|-------------|
+| **Retries** | 2 retries with exponential backoff |
+| **DLQ** | Dead Letter Queue (SQS or SNS) for failed events |
+| **Destinations** | Route success/failure to SQS, SNS, Lambda, or EventBridge |
+
+> 💡 **Destinations** are preferred over DLQ — more features, supports success events
+
+### Event Source Mapping
+
+Lambda polls from:
+
+| Source | Behavior |
+|--------|----------|
+| **SQS** | Batch processing, long polling |
+| **SQS FIFO** | Lambda scales to # of message groups |
+| **Kinesis/DynamoDB Streams** | Process in order per shard |
+
+**Error Handling:**
+
+- Entire batch fails if one record fails
+- Options: discard, retry, split batch, send to DLQ/destination
+
+### Lambda in VPC
+
+By default, Lambda runs in AWS-managed VPC (has internet). To access private resources:
+
+1. Configure VPC, subnets, security groups
+2. Lambda creates ENIs in your subnets
+3. Use NAT Gateway for internet access from private subnet
+
+> ⚠️ Lambda in VPC has no internet unless you have NAT Gateway
+
+### Lambda Concurrency
+
+| Type | Description |
+|------|-------------|
+| **Unreserved** | Shared pool, up to account limit |
+| **Reserved** | Guaranteed minimum for a function |
+| **Provisioned** | Pre-initialized instances, no cold start |
+
+**Cold Start:** First invocation initializes execution environment (can add seconds). Provisioned concurrency eliminates cold starts.
+
+### Lambda Layers
+
+Share code/dependencies across functions:
+
+```
+Function → Layer 1 (libs) → Layer 2 (common code)
+```
+
+- Up to 5 layers per function
+- Total unzipped size < 250 MB
+- Use for: common libraries, custom runtimes
+
+### Lambda@Edge / CloudFront Functions
+
+| Type | Location | Max Duration | Use Case |
+|------|----------|--------------|----------|
+| **CloudFront Functions** | Edge locations | < 1 ms | Simple request/response manipulation |
+| **Lambda@Edge** | Regional edge cache | 5-30 seconds | Complex logic, external calls |
+
+---
+
+## API Gateway
+
+Managed API service — create, publish, secure, and monitor APIs.
+
+### Endpoint Types
+
+| Type | Description |
+|------|-------------|
+| **Edge-optimized** | Routed through CloudFront (default) |
+| **Regional** | For clients in same region |
+| **Private** | Accessible only from VPC via VPC endpoint |
+
+### API Types
+
+| Type | Features | Cost |
+|------|----------|------|
+| **REST API** | Full features (caching, API keys, usage plans, request validation) | Higher |
+| **HTTP API** | Simpler, faster, JWT auth only | ~70% cheaper |
+| **WebSocket API** | Real-time two-way communication | Per message |
+
+### Integration Types
+
+| Type | Description |
+|------|-------------|
+| **Lambda Proxy** | Request passed as-is to Lambda, Lambda returns full response |
+| **Lambda Custom** | Transform request/response with mapping templates |
+| **HTTP Proxy** | Pass through to HTTP endpoint |
+| **HTTP Custom** | Transform with mapping templates |
+| **AWS Service** | Direct integration with AWS services |
+| **Mock** | Return response without backend |
+
+> 💡 **Lambda Proxy** is most common — simplest setup, Lambda controls response format
+
+### API Gateway Security
+
+| Method | Description |
+|--------|-------------|
+| **IAM** | AWS Sig v4, good for internal/AWS clients |
+| **Lambda Authorizer** | Custom auth logic (JWT, OAuth, etc.) |
+| **Cognito User Pools** | JWT validation with Cognito |
+| **API Keys + Usage Plans** | Rate limiting per client |
+
+### Stages and Deployment
+
+| Concept | Description |
+|---------|-------------|
+| **Stage** | Named reference to deployment (dev, prod, v1) |
+| **Stage Variables** | Key-value pairs, like environment variables |
+| **Canary Deployment** | Route % of traffic to new deployment |
+
+### Throttling
+
+| Limit | Value |
+|-------|-------|
+| **Account limit** | 10,000 requests/second |
+| **Per-stage limit** | Configurable |
+| **Per-client (Usage Plans)** | API key-based throttling |
+
+> **429 Too Many Requests** when throttled. Client should retry with exponential backoff.
+
+### Caching
+
+- Cache responses at stage level
+- TTL: 0-3600 seconds (default: 300)
+- Cache size: 0.5 GB – 237 GB
+- Cache key: method + resource path (can include headers/query params)
+
+> 💡 Reduce backend calls, improve latency. Invalidate with `Cache-Control: max-age=0` header.
+
+---
+
+## DynamoDB
+
+Fully managed NoSQL database — millisecond latency at any scale.
+
+### Core Concepts
+
+| Concept | Description |
+|---------|-------------|
+| **Table** | Collection of items |
+| **Item** | Row (max 400 KB) |
+| **Attribute** | Column (nested up to 32 levels) |
+| **Primary Key** | Partition key (required) + optional sort key |
+
+### Primary Key Options
+
+| Type | Components | Use Case |
+|------|------------|----------|
+| **Partition key** | Single attribute | Unique identifier |
+| **Composite** | Partition + Sort key | One-to-many relationships |
+
+> 💡 Choose partition key with high cardinality for even distribution
+
+### Capacity Modes
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| **Provisioned** | Set RCU/WCU, auto-scaling available | Predictable workloads |
+| **On-Demand** | Pay per request | Unpredictable, new tables |
+
+**Throughput units:**
+
+| Unit | Capacity |
+|------|----------|
+| **1 RCU** | 1 strongly consistent read/sec (4 KB) OR 2 eventually consistent |
+| **1 WCU** | 1 write/sec (1 KB) |
+
+### Read Consistency
+
+| Type | Description |
+|------|-------------|
+| **Eventually consistent** | Default, might return stale data |
+| **Strongly consistent** | Returns most recent data, uses 2x RCU |
+
+### Secondary Indexes
+
+| Type | Partition Key | Sort Key | When Created | Throughput |
+|------|---------------|----------|--------------|------------|
+| **LSI** | Same as table | Different | Table creation only | Shares table's |
+| **GSI** | Different | Different | Anytime | Separate (provision separately) |
+
+> ⚠️ **GSI throttling** can throttle main table writes. Provision GSI capacity carefully.
+
+### DynamoDB Streams
+
+Ordered stream of item modifications (insert, update, delete).
+
+| View Type | Content |
+|-----------|---------|
+| **KEYS_ONLY** | Just the key attributes |
+| **NEW_IMAGE** | Item after modification |
+| **OLD_IMAGE** | Item before modification |
+| **NEW_AND_OLD_IMAGES** | Both images |
+
+**Use cases:** Trigger Lambda, replicate to other tables, analytics
+
+### DynamoDB Operations
+
+| Operation | Description | Cost |
+|-----------|-------------|------|
+| **GetItem** | Single item by primary key | Uses RCU |
+| **Query** | Items by partition key + optional sort key | Efficient, uses RCU |
+| **Scan** | Entire table | Expensive, avoid in production |
+| **BatchGetItem** | Up to 100 items | Parallel GetItem |
+| **BatchWriteItem** | Up to 25 PutItem/DeleteItem | Parallel writes |
+
+### Conditional Writes
+
+```python
+# Optimistic locking example
+response = table.update_item(
+    Key={'pk': 'item1'},
+    UpdateExpression='SET #v = :newval, version = version + :inc',
+    ConditionExpression='version = :expectedVersion',
+    ExpressionAttributeValues={':expectedVersion': 1, ':newval': 'updated', ':inc': 1}
+)
+```
+
+> 💡 Use for optimistic concurrency control — no locking overhead
+
+### DynamoDB Accelerator (DAX)
+
+In-memory cache for DynamoDB — microsecond latency.
+
+| Feature | Value |
+|---------|-------|
+| **Latency** | Microseconds (vs milliseconds) |
+| **Cache** | Item cache + query cache |
+| **Compatibility** | Drop-in replacement (same API) |
+
+> Use case: Read-heavy workloads, hot keys
+
+### Global Tables
+
+Multi-region, multi-active replication.
+
+| Feature | Description |
+|---------|-------------|
+| **Active-Active** | Read/write in any region |
+| **Replication** | Sub-second across regions |
+| **Requirement** | DynamoDB Streams must be enabled |
+
+### TTL (Time-To-Live)
+
+Auto-delete expired items (no WCU cost).
+
+```
+Set TTL attribute → Store expiry timestamp (epoch) → DynamoDB deletes after expiry
+```
+
+---
+
+## SQS (Simple Queue Service)
+
+Fully managed message queue — decouple applications.
+
+### Queue Types
+
+| Type | Throughput | Ordering | Delivery |
+|------|------------|----------|----------|
+| **Standard** | Unlimited | Best-effort | At-least-once |
+| **FIFO** | 300 msg/s (3000 batched) | Strict | Exactly-once |
+
+### Key Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| **Visibility Timeout** | 30 seconds | Time message is hidden after receive |
+| **Message Retention** | 4 days | Max: 14 days |
+| **Max Message Size** | 256 KB | Use S3 for larger payloads |
+| **Delay Queue** | 0 seconds | Delay before message is visible |
+| **Long Polling** | Disabled | Wait for messages (reduces API calls) |
+
+### Visibility Timeout
+
+```
+Receive → Message hidden → Process → Delete
+                 ↓
+         (If timeout expires before delete)
+                 ↓
+         Message reappears in queue
+```
+
+> 💡 If processing takes longer than visibility timeout, call `ChangeMessageVisibility`
+
+### Dead Letter Queue (DLQ)
+
+Messages that fail processing after `maxReceiveCount` go to DLQ.
+
+| Setting | Description |
+|---------|-------------|
+| **maxReceiveCount** | # of receives before sending to DLQ |
+| **Redrive** | Move DLQ messages back to main queue |
+
+### FIFO Queues
+
+| Feature | Description |
+|---------|-------------|
+| **MessageGroupId** | Messages in same group processed in order |
+| **MessageDeduplicationId** | Prevent duplicates within 5-minute window |
+| **Naming** | Queue name must end with `.fifo` |
+
+### SQS + Lambda
+
+Lambda polls SQS and processes batches:
+
+| Setting | Description |
+|---------|-------------|
+| **Batch size** | 1-10 messages per invocation |
+| **Batch window** | Time to wait for batch to fill |
+| **Concurrency** | One invocation per message group (FIFO) |
+
+---
+
+## SNS (Simple Notification Service)
+
+Pub/sub messaging — push to multiple subscribers.
+
+### Subscribers
+
+| Type | Use Case |
+|------|----------|
+| **SQS** | Queue for processing |
+| **Lambda** | Serverless processing |
+| **HTTP/S** | Webhook endpoints |
+| **Email/SMS** | User notifications |
+| **Kinesis Data Firehose** | Stream to S3, Redshift |
+
+### Fan-Out Pattern
+
+```
+Producer → SNS Topic → SQS Queue 1 → Consumer 1
+                    → SQS Queue 2 → Consumer 2
+                    → Lambda → Process
+```
+
+> 💡 Decouple, parallel processing, different consumption rates
+
+### Message Filtering
+
+Filter messages per subscriber using **filter policies**:
+
+```json
+{
+  "eventType": ["order_placed"],
+  "store": [{"prefix": "us-"}]
+}
+```
+
+### FIFO Topics
+
+- Order guaranteed per message group
+- Subscribers must be SQS FIFO queues
+- Topic name must end with `.fifo`
+
+---
+
+## Kinesis
+
+Real-time streaming data at scale.
+
+### Kinesis Services
+
+| Service | Purpose |
+|---------|---------|
+| **Kinesis Data Streams** | Collect and process real-time data |
+| **Kinesis Data Firehose** | Load streams into AWS data stores |
+| **Kinesis Data Analytics** | SQL/Flink analytics on streams |
+| **Kinesis Video Streams** | Stream video for analytics |
+
+### Kinesis Data Streams
+
+| Concept | Description |
+|---------|-------------|
+| **Shard** | Unit of capacity (1 MB/s in, 2 MB/s out) |
+| **Partition Key** | Determines which shard receives record |
+| **Sequence Number** | Unique ID per record within shard |
+| **Retention** | 1-365 days (default: 24 hours) |
+
+**Capacity:**
+
+| Direction | Per Shard |
+|-----------|-----------|
+| **Write** | 1 MB/s or 1,000 records/s |
+| **Read** | 2 MB/s (shared by all consumers) |
+
+### Consumer Types
+
+| Type | Description |
+|------|-------------|
+| **Shared** | Multiple consumers share 2 MB/s per shard |
+| **Enhanced Fan-Out** | 2 MB/s per consumer per shard (push model) |
+
+### Kinesis Data Firehose
+
+Near real-time delivery (60-900 second buffer) to:
+
+| Destination | Description |
+|-------------|-------------|
+| **S3** | Most common |
+| **Redshift** | Via S3 copy |
+| **OpenSearch** | Search/analytics |
+| **HTTP endpoint** | Custom destinations |
+
+> 💡 Firehose = managed, auto-scaling, no capacity planning. Streams = more control, real-time.
+
+### Streams vs Firehose
+
+| Feature | Data Streams | Data Firehose |
+|---------|--------------|---------------|
+| **Latency** | ~200 ms | 60-900 seconds |
+| **Capacity** | Provision shards | Auto-scaling |
+| **Data retention** | 1-365 days | No storage |
+| **Consumer** | Custom (Lambda, apps) | Built-in destinations |
+| **Data transformation** | External | Built-in Lambda |
+
+---
+
+## Step Functions
+
+Orchestrate Lambda functions and AWS services with visual workflows.
+
+### Key Concepts
+
+| Concept | Description |
+|---------|-------------|
+| **State Machine** | Workflow definition (JSON/YAML) |
+| **State** | Individual step in workflow |
+| **Execution** | Running instance of state machine |
+| **Task** | Unit of work (Lambda, AWS service, HTTP) |
+
+### State Types
+
+| State | Description |
+|-------|-------------|
+| **Task** | Execute work (Lambda, AWS API) |
+| **Choice** | Branch based on condition |
+| **Parallel** | Execute branches in parallel |
+| **Map** | Iterate over array |
+| **Wait** | Delay execution |
+| **Pass** | Pass input to output, inject data |
+| **Succeed/Fail** | End execution |
+
+### Workflow Types
+
+| Type | Max Duration | Pricing | Use Case |
+|------|--------------|---------|----------|
+| **Standard** | 1 year | Per state transition | Long-running, auditing |
+| **Express** | 5 minutes | Per execution + duration | High-volume, event processing |
+
+### Error Handling
+
+| Mechanism | Description |
+|-----------|-------------|
+| **Retry** | Retry failed states with backoff |
+| **Catch** | Handle errors, transition to fallback |
+
+```json
+"Retry": [{
+  "ErrorEquals": ["States.TaskFailed"],
+  "MaxAttempts": 3,
+  "IntervalSeconds": 1,
+  "BackoffRate": 2.0
+}],
+"Catch": [{
+  "ErrorEquals": ["States.ALL"],
+  "Next": "HandleError"
+}]
+```
+
+### Service Integrations
+
+| Pattern | Description |
+|---------|-------------|
+| **Request Response** | Call service, wait for response |
+| **Run a Job (.sync)** | Wait for job completion (Batch, ECS, Glue) |
+| **Wait for Callback** | Pause until external callback (Human approval) |
+
+---
+
+## ECS, Fargate & ECR (Containers)
+
+### ECS (Elastic Container Service)
+
+Container orchestration on AWS.
+
+| Launch Type | Description |
+|-------------|-------------|
+| **EC2** | You manage EC2 instances, more control |
+| **Fargate** | Serverless, AWS manages infrastructure |
+
+### ECS Concepts
+
+| Concept | Description |
+|---------|-------------|
+| **Task Definition** | Blueprint for containers (image, CPU, memory, ports) |
+| **Task** | Running instance of Task Definition |
+| **Service** | Maintains desired count of tasks, load balancing |
+| **Cluster** | Logical grouping of tasks/services |
+
+### Task Definition Settings
+
+| Setting | Description |
+|---------|-------------|
+| **Image** | Docker image (from ECR or public) |
+| **CPU/Memory** | Resource allocation |
+| **Port Mappings** | Container port to host port |
+| **Environment** | Variables, secrets from SSM/Secrets Manager |
+| **IAM Role** | Task role (permissions for containers) |
+| **Logging** | CloudWatch Logs integration |
+
+### Fargate
+
+| Feature | Description |
+|---------|-------------|
+| **Serverless** | No EC2 management |
+| **Pricing** | Per vCPU + memory per second |
+| **Scaling** | Auto-scaling on CPU/memory metrics |
+
+### ECR (Elastic Container Registry)
+
+Private Docker registry:
+
+| Feature | Description |
+|---------|-------------|
+| **Encryption** | Images encrypted at rest |
+| **Scanning** | Vulnerability scanning |
+| **Lifecycle Policies** | Auto-delete old images |
+| **Cross-region** | Replicate to other regions |
+
+### ECS IAM Roles
+
+| Role | Purpose |
+|------|---------|
+| **Task Execution Role** | Pulls images from ECR, sends logs to CloudWatch |
+| **Task Role** | Permissions for the application running in container |
+
+> 💡 **Task Role** = what container can do. **Execution Role** = what ECS agent can do.
+
+### ECS + Load Balancing
+
+| Feature | Description |
+|---------|-------------|
+| **ALB** | Dynamic port mapping, path-based routing |
+| **NLB** | High throughput, static IP |
+| **Service Discovery** | Route 53 DNS for service-to-service |
+
+---
+
+## CloudFormation
+
+Infrastructure as Code — define AWS resources in templates.
+
+### Template Structure
+
+```yaml
+AWSTemplateFormatVersion: "2010-09-09"
+Description: String
+Parameters: # Input values
+Resources: # AWS resources (REQUIRED)
+Outputs: # Export values
+Mappings: # Static variables
+Conditions: # Conditional resource creation
+```
+
+### Intrinsic Functions
+
+| Function | Purpose | Example |
+|----------|---------|---------|
+| `!Ref` | Reference resource/parameter | `!Ref MyBucket` |
+| `!GetAtt` | Get resource attribute | `!GetAtt MyBucket.Arn` |
+| `!Sub` | String substitution | `!Sub "arn:aws:s3:::${BucketName}"` |
+| `!Join` | Join strings | `!Join ["-", [a, b, c]]` → "a-b-c" |
+| `!If` | Conditional value | `!If [Prod, m5.large, t3.micro]` |
+| `!ImportValue` | Import from another stack | `!ImportValue VPCId` |
+| `!FindInMap` | Lookup in Mappings | `!FindInMap [RegionMap, !Ref 'AWS::Region', AMI]` |
+
+### Pseudo Parameters
+
+| Parameter | Value |
+|-----------|-------|
+| `AWS::AccountId` | Account ID |
+| `AWS::Region` | Current region |
+| `AWS::StackName` | Stack name |
+| `AWS::StackId` | Stack ID |
+| `AWS::NoValue` | Remove property conditionally |
+
+### Cross-Stack References
+
+**Stack A (export):**
+```yaml
+Outputs:
+  VPCId:
+    Value: !Ref MyVPC
+    Export:
+      Name: SharedVPC
+```
+
+**Stack B (import):**
+```yaml
+VpcId: !ImportValue SharedVPC
+```
+
+### Nested Stacks
+
+Reusable components embedded in parent stack:
+
+```yaml
+Resources:
+  NetworkStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/mybucket/network.yaml
+```
+
+> 💡 **Nested** = component reuse. **Cross-stack** = share values between independent stacks.
+
+### Change Sets
+
+Preview changes before executing:
+
+```bash
+aws cloudformation create-change-set --stack-name MyStack --template-body file://template.yaml
+aws cloudformation describe-change-set --change-set-name MyChangeSet
+aws cloudformation execute-change-set --change-set-name MyChangeSet
+```
+
+### Drift Detection
+
+Detect if actual resources differ from template definition.
+
+---
+
+## AWS SAM (Serverless Application Model)
+
+Simplified CloudFormation for serverless.
+
+### SAM Template
+
+```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31  # SAM transform
+
+Globals:
+  Function:
+    Timeout: 30
+
+Resources:
+  MyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: python3.9
+      CodeUri: ./src
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: GET
+```
+
+### SAM Resource Types
+
+| Type | Creates |
+|------|---------|
+| `AWS::Serverless::Function` | Lambda + execution role |
+| `AWS::Serverless::Api` | API Gateway REST API |
+| `AWS::Serverless::HttpApi` | API Gateway HTTP API |
+| `AWS::Serverless::SimpleTable` | DynamoDB table |
+| `AWS::Serverless::LayerVersion` | Lambda Layer |
+
+### SAM CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `sam init` | Initialize new project |
+| `sam build` | Build and package |
+| `sam local invoke` | Test locally |
+| `sam local start-api` | Local API Gateway |
+| `sam deploy --guided` | Interactive deployment |
+| `sam sync` | Fast sync for development |
+
+### SAM Policy Templates
+
+Built-in policies for common patterns:
+
+```yaml
+Policies:
+  - S3ReadPolicy:
+      BucketName: !Ref MyBucket
+  - DynamoDBCrudPolicy:
+      TableName: !Ref MyTable
+```
+
+---
+
+## CI/CD: CodeCommit, CodeBuild, CodeDeploy, CodePipeline
+
+### CodeCommit
+
+AWS Git repository hosting.
+
+| Feature | Description |
+|---------|-------------|
+| **Auth** | HTTPS (Git credentials), SSH (keys), IAM roles |
+| **Triggers** | Lambda, SNS on repository events |
+| **Notifications** | CloudWatch Events/EventBridge |
+
+### CodeBuild
+
+Managed build service — compile, test, produce artifacts.
+
+**buildspec.yml:**
+
+```yaml
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+  pre_build:
+    commands:
+      - pip install -r requirements.txt
+  build:
+    commands:
+      - python -m pytest
+      - sam build
+  post_build:
+    commands:
+      - sam package --s3-bucket $BUCKET
+
+artifacts:
+  files:
+    - template.yaml
+    - '**/*'
+
+cache:
+  paths:
+    - '/root/.cache/pip/**/*'
+```
+
+| Section | Purpose |
+|---------|---------|
+| **phases** | install, pre_build, build, post_build |
+| **artifacts** | Files to output |
+| **cache** | Speed up builds |
+| **env** | Environment variables |
+
+### CodeDeploy
+
+Automated deployment to EC2, Lambda, ECS.
+
+**appspec.yml (EC2):**
+
+```yaml
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /var/www/html
+hooks:
+  BeforeInstall:
+    - location: scripts/install_dependencies.sh
+  AfterInstall:
+    - location: scripts/start_server.sh
+```
+
+**Lifecycle Hooks (EC2):**
+
+```
+ApplicationStop → DownloadBundle → BeforeInstall → Install → AfterInstall → ApplicationStart → ValidateService
+```
+
+### Deployment Types
+
+| Platform | Types | Description |
+|----------|-------|-------------|
+| **EC2** | In-Place, Blue/Green | Rolling update or swap target groups |
+| **Lambda** | AllAtOnce, Canary, Linear | Traffic shifting |
+| **ECS** | Blue/Green | Traffic shifting with ALB |
+
+**Lambda deployment:**
+
+| Type | Description |
+|------|-------------|
+| **AllAtOnce** | Immediate shift to new version |
+| **Canary** | x% for n minutes, then 100% |
+| **Linear** | x% every n minutes |
+
+### CodePipeline
+
+Orchestrate CI/CD workflow:
+
+```
+Source → Build → Test → Deploy
+        ↓
+   [Manual Approval]
+```
+
+| Feature | Description |
+|---------|-------------|
+| **Stages** | Sequential groups of actions |
+| **Actions** | Individual tasks (source, build, deploy) |
+| **Artifacts** | Files passed between stages (stored in S3) |
+| **Manual Approval** | Human gate between stages |
+
+---
+
+## CloudWatch
+
+Monitoring, logging, and alarms.
+
+### CloudWatch Metrics
+
+| Concept | Description |
+|---------|-------------|
+| **Namespace** | Container for metrics (e.g., AWS/EC2) |
+| **Dimension** | Attribute of metric (InstanceId, AutoScalingGroupName) |
+| **Resolution** | Standard (1 min) or High-res (1 sec) |
+| **Custom Metrics** | Your own metrics via PutMetricData API |
+
+**EC2 Default Metrics:**
+- CPU, Network, Disk (read/write operations)
+- **NOT included:** Memory, disk space (need CloudWatch Agent)
+
+### CloudWatch Alarms
+
+| State | Description |
+|-------|-------------|
+| **OK** | Metric within threshold |
+| **ALARM** | Metric breached threshold |
+| **INSUFFICIENT_DATA** | Not enough data points |
+
+**Actions:** SNS notification, Auto Scaling, EC2 actions (stop, terminate, reboot)
+
+### CloudWatch Logs
+
+| Concept | Description |
+|---------|-------------|
+| **Log Group** | Collection of log streams (e.g., per application) |
+| **Log Stream** | Sequence of events from same source |
+| **Retention** | Never expire by default, configure 1 day to 10 years |
+| **Metric Filters** | Extract metrics from log data |
+| **Subscription Filters** | Stream logs to Lambda, Kinesis, OpenSearch |
+
+### CloudWatch Logs Insights
+
+Query logs with SQL-like syntax:
+
+```sql
+fields @timestamp, @message
+| filter @message like /ERROR/
+| sort @timestamp desc
+| limit 20
+```
+
+### CloudWatch Agent
+
+Install on EC2/on-premises for:
+
+- **Custom metrics:** Memory, disk, swap, custom
+- **Log collection:** Push logs to CloudWatch Logs
+
+### CloudWatch Container Insights
+
+Monitoring for ECS, EKS, Kubernetes — metrics per container, task, service.
+
+---
+
+## X-Ray
+
+Distributed tracing for debugging and performance analysis.
+
+### Key Concepts
+
+| Concept | Description |
+|---------|-------------|
+| **Trace** | End-to-end request journey |
+| **Segment** | Work done by one service |
+| **Subsegment** | Granular breakdown (HTTP calls, DB queries) |
+| **Annotations** | Indexed key-value pairs (searchable) |
+| **Metadata** | Non-indexed key-value pairs |
+
+### X-Ray Integration
+
+| Service | Setup |
+|---------|-------|
+| **Lambda** | Enable active tracing |
+| **API Gateway** | Enable tracing in stage settings |
+| **EC2/ECS** | Install X-Ray daemon + SDK |
+| **Elastic Beanstalk** | Extension configuration |
+
+### X-Ray Daemon
+
+Runs on EC2/ECS, buffers and sends trace data to X-Ray API.
+
+```
+App (X-Ray SDK) → UDP port 2000 → X-Ray Daemon → X-Ray API
+```
+
+### X-Ray Sampling
+
+Control volume of requests traced:
+
+| Setting | Description |
+|---------|-------------|
+| **Reservoir** | Fixed # requests per second traced |
+| **Rate** | Percentage of additional requests traced |
+
+Default: 1 request/sec + 5% additional
+
+### X-Ray APIs
+
+| API | Used By |
+|-----|---------|
+| **PutTraceSegments** | App/SDK uploads segments |
+| **GetTraceSummaries** | Get list of traces |
+| **BatchGetTraces** | Get full trace details |
+
+---
+
+## Cognito
+
+User identity and access management.
+
+### Cognito User Pools (CUP)
+
+**Authentication** — Sign-up, sign-in, returns JWT tokens.
+
+| Feature | Description |
+|---------|-------------|
+| **Sign-up/Sign-in** | Email, phone, username |
+| **MFA** | SMS, TOTP |
+| **Social login** | Google, Facebook, SAML, OIDC |
+| **Hosted UI** | Pre-built login pages |
+| **Triggers** | Lambda on auth events |
+
+**JWT Tokens:**
+- **ID Token:** User identity/attributes
+- **Access Token:** API authorization
+- **Refresh Token:** Get new tokens
+
+### Cognito Identity Pools (Federated Identities)
+
+**Authorization** — Exchange tokens for temporary AWS credentials.
+
+```
+[User] → [CUP/Social] → [ID Token] → [Identity Pool] → [Temp AWS Credentials]
+```
+
+| Feature | Description |
+|---------|-------------|
+| **Federation** | CUP, Google, Facebook, SAML, OpenID |
+| **IAM Roles** | Map users to authenticated/unauthenticated roles |
+| **Fine-grained** | Policy variables for row-level access |
+
+### User Pools vs Identity Pools
+
+| Feature | User Pools | Identity Pools |
+|---------|------------|----------------|
+| **Purpose** | Authentication | Authorization |
+| **Returns** | JWT tokens | AWS credentials |
+| **Use with** | API Gateway, ALB | AWS SDK (S3, DynamoDB) |
+
+---
+
+## KMS (Key Management Service)
+
+Managed encryption keys.
+
+### Key Types
+
+| Type | Managed By | Cost | Rotation |
+|------|------------|------|----------|
+| **AWS Owned** | AWS | Free | Varies |
+| **AWS Managed** | AWS | Free | Auto yearly |
+| **Customer Managed** | You | $/month + $/API call | Optional/yearly |
+
+### KMS API Operations
+
+| API | Purpose |
+|-----|---------|
+| **Encrypt** | Encrypt data up to 4 KB |
+| **Decrypt** | Decrypt data |
+| **GenerateDataKey** | Returns plaintext + encrypted data key |
+| **GenerateDataKeyWithoutPlaintext** | Returns only encrypted data key |
+
+### Envelope Encryption
+
+For data > 4 KB:
+
+```
+1. GenerateDataKey → plaintext DEK + encrypted DEK
+2. Encrypt data with plaintext DEK
+3. Store encrypted DEK with encrypted data
+4. Decrypt: Use KMS to decrypt DEK → use DEK to decrypt data
+```
+
+### KMS Key Policies
+
+| Policy Type | Description |
+|-------------|-------------|
+| **Default** | Created automatically, grants access to root user |
+| **Custom** | Define who can access key, required for cross-account |
+
+### Encryption Context
+
+Additional authenticated data for extra security:
+
+```python
+kms.encrypt(
+    KeyId='alias/my-key',
+    Plaintext=data,
+    EncryptionContext={'department': 'engineering'}
+)
+```
+
+> Decryption must include same encryption context
+
+---
+
+## Secrets Manager & SSM Parameter Store
+
+### Secrets Manager
+
+| Feature | Description |
+|---------|-------------|
+| **Purpose** | Store secrets (passwords, API keys, tokens) |
+| **Rotation** | Automatic rotation with Lambda |
+| **Integration** | RDS, Redshift, DocumentDB automatic rotation |
+| **Cost** | Per secret + per API call |
+
+### SSM Parameter Store
+
+| Feature | Description |
+|---------|-------------|
+| **Purpose** | Configuration and secrets |
+| **Types** | String, StringList, SecureString (encrypted) |
+| **Hierarchy** | `/app/prod/db-connection` |
+| **Cost** | Free (standard) or paid (advanced) |
+
+### When to Use Which
+
+| Use Case | Service |
+|----------|---------|
+| **Secrets with rotation** | Secrets Manager |
+| **RDS/database credentials** | Secrets Manager |
+| **Configuration values** | Parameter Store |
+| **Cost-sensitive** | Parameter Store |
+| **Simple secrets without rotation** | Parameter Store (SecureString) |
+
+---
+
+## EventBridge
+
+Serverless event bus — route events to targets.
+
+### Event Sources
+
+| Source | Examples |
+|--------|----------|
+| **AWS Services** | EC2, S3, CodePipeline state changes |
+| **Custom Apps** | Your applications via PutEvents API |
+| **SaaS Partners** | Zendesk, Datadog, Auth0 |
+| **Scheduled** | Cron expressions |
+
+### Event Rules
+
+| Type | Description |
+|------|-------------|
+| **Event Pattern** | Match events by pattern (source, detail-type, etc.) |
+| **Schedule** | Cron or rate expression |
+
+### Event Targets
+
+Lambda, SQS, SNS, Step Functions, Kinesis, ECS Tasks, CodePipeline, EC2 Actions, API Gateway, EventBridge in another account/region...
+
+### Event Pattern Example
+
+```json
+{
+  "source": ["aws.ec2"],
+  "detail-type": ["EC2 Instance State-change Notification"],
+  "detail": {
+    "state": ["stopped", "terminated"]
+  }
+}
+```
+
+### Schema Registry
+
+- Discover/store event schemas
+- Generate code bindings
+- Versioning
+
+---
+
+## Elastic Beanstalk
+
+PaaS for deploying web applications.
+
+### Deployment Policies
+
+| Policy | Downtime | Description |
+|--------|----------|-------------|
+| **All at once** | Yes | Fastest, brief outage |
+| **Rolling** | No | Deploy batch by batch |
+| **Rolling with additional batch** | No | Maintain capacity during deployment |
+| **Immutable** | No | New ASG, swap when healthy |
+| **Blue/Green** | No | Create new environment, swap URL |
+
+### Beanstalk Extensions
+
+`.ebextensions/*.config` files customize environment:
+
+```yaml
+option_settings:
+  aws:elasticbeanstalk:application:environment:
+    MY_ENV_VAR: value
+
+packages:
+  yum:
+    git: []
+
+container_commands:
+  01_migrate:
+    command: "python manage.py migrate"
+    leader_only: true
+```
+
+### Lifecycle Policy
+
+Limit stored application versions (max 1000):
+
+- Delete based on age or count
+- Option to preserve source bundle in S3
+
+---
 
 ## Self-Exam Questions
 
